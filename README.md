@@ -43,7 +43,9 @@ The "escalation" model treats LLMs like heterogeneous microservices - route to t
 
 **Option 1: Click the button below**
 
-[![Add to Cursor](https://img.shields.io/badge/Add_to_Cursor-blue?style=for-the-badge&logo=cursor&logoColor=white)](cursor://anysphere.cursor-deeplink/mcp/install?name=deep-code-reasoning&config=eyJkZWVwLWNvZGUtcmVhc29uaW5nIjp7ImNvbW1hbmQiOiJub2RlIiwiYXJncyI6WyIvcGF0aC90by9kZWVwLWNvZGUtcmVhc29uaW5nLW1jcC9kaXN0L2luZGV4LmpzIl0sImVudiI6eyJHRU1JTklfQVBJX0tFWSI6InlvdXItZ2VtaW5pLWFwaS1rZXkifX19)
+<a href="cursor://anysphere.cursor-deeplink/mcp/install?name=deep-code-reasoning&config=eyJkZWVwLWNvZGUtcmVhc29uaW5nIjp7ImNvbW1hbmQiOiJub2RlIiwiYXJncyI6WyIvcGF0aC90by9kZWVwLWNvZGUtcmVhc29uaW5nLW1jcC9kaXN0L2luZGV4LmpzIl0sImVudiI6eyJHRU1JTklfQVBJX0tFWSI6InlvdXItZ2VtaW5pLWFwaS1rZXkifX19">
+  <img src="https://img.shields.io/badge/Add_to_Cursor-blue?style=for-the-badge&logo=cursor&logoColor=white" alt="Add to Cursor">
+</a>
 
 **Option 2: Copy and paste this link into your browser**
 ```
