@@ -5,6 +5,32 @@ Follow this steps to achieve the task:
 # rules
 
 - [MANDATORY] When asked to follow instructions step by step, break down the task into clear steps, selecting the appropriate tools and fallbacks (multiple if needed) from your tool list for each step.
+  - ools are in `.github/.knowledge_base/0-tool_usage/1-simple_tool_list.md`.
+  - You will also find more information about each tool in `.github/.knowledge_base/0-tool_usage/tools_and_mcps.md`.
+- [MANDATORY] Always prefer tools that are specialized for the task at hand, rather than general-purpose tools.
+- [MANDATORY] You are obliged to #think and `optimize tool selection`[^1] before executing any task where tools are not explictly set.
+
+# tasks
+
+## setup task
+
+1. Check the git repository remote. it should be this
+
+    - `git remote get-url origin`
+    - if not, set it to this: `git remote set-url origin https://github.com/lucasgaldinos/mcp-server-deep-code-reasoning-mcp`
+    - it should point to my forked repository.
+    - create the pull request after pushing the changes.
+    - approve the pull request and merge it.
+
+---
+
+#think
+
+Follow this steps to achieve the task:
+
+# rules
+
+- [MANDATORY] When asked to follow instructions step by step, break down the task into clear steps, selecting the appropriate tools and fallbacks (multiple if needed) from your tool list for each step.
   - The available tools are in `.github/.knowledge_base/0-tool_usage/1-simple_tool_list.md`.
   - You will also find more information about each tool in `.github/.knowledge_base/0-tool_usage/tools_and_mcps.md`.
 - [MANDATORY] Always prefer tools that are specialized for the task at hand, rather than general-purpose tools.
