@@ -1,7 +1,7 @@
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import type { CodeScope, CodeLocation } from '../models/types.js';
-import { FileSystemError } from '../errors/index.js';
+import fs from 'fs/promises';
+import path from 'path';
+import type { CodeScope, CodeLocation } from '@models/types.js';
+import { FileSystemError } from '@errors/index.js';
 
 export class CodeReader {
   private cache: Map<string, string> = new Map();

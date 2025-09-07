@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { ClaudeCodeContext, Finding } from '../models/types.js';
+import type { ClaudeCodeContext, Finding } from '@models/types.js';
 
 /**
  * InputValidator provides schema validation for user inputs to prevent malicious data

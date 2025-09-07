@@ -1,3 +1,13 @@
+---
+title: Deep Code Reasoning MCP Server
+description: An MCP server that pairs Claude Code with Google's Gemini AI for complementary code analysis
+status: published
+updated: 2025-01-09
+tags: [mcp-server, claude, gemini, code-analysis, ai]
+version: 0.1.0
+license: MIT
+---
+
 # Deep Code Reasoning MCP Server
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,6 +19,7 @@ An MCP server that pairs Claude Code with Google's Gemini AI for complementary c
 ## Core Value
 
 Both Claude and Gemini can handle deep semantic reasoning and distributed system bugs. This server enables an intelligent routing strategy where:
+
 - **Claude Code** excels at local-context operations, incremental patches, and CLI-native workflows
 - **Gemini 2.5 Pro** shines with huge-context sweeps, synthetic test execution, and analyzing failures that span logs + traces + code
 
@@ -48,23 +59,27 @@ The "escalation" model treats LLMs like heterogeneous microservices - route to t
 ### Manual Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/Haasonsaas/deep-code-reasoning-mcp.git
 cd deep-code-reasoning-mcp
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Set up your Gemini API key:
+
 ```bash
 cp .env.example .env
 # Edit .env and add your GEMINI_API_KEY
 ```
 
 4. Build the project:
+
 ```bash
 npm run build
 ```
@@ -113,6 +128,7 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
 The server now includes AI-to-AI conversational tools that enable Claude and Gemini to engage in multi-turn dialogues for complex analysis:
 
 #### start_conversation
+
 Initiates a conversational analysis session between Claude and Gemini.
 
 ```typescript
@@ -133,6 +149,7 @@ Initiates a conversational analysis session between Claude and Gemini.
 ```
 
 #### continue_conversation
+
 Continues an active conversation with Claude's response or follow-up question.
 
 ```typescript
@@ -144,6 +161,7 @@ Continues an active conversation with Claude's response or follow-up question.
 ```
 
 #### finalize_conversation
+
 Completes the conversation and generates structured analysis results.
 
 ```typescript
@@ -154,6 +172,7 @@ Completes the conversation and generates structured analysis results.
 ```
 
 #### get_conversation_status
+
 Checks the status and progress of an ongoing conversation.
 
 ```typescript
@@ -165,6 +184,7 @@ Checks the status and progress of an ongoing conversation.
 ### Traditional Analysis Tools
 
 #### escalate_analysis
+
 Main tool for handing off complex analysis from Claude Code to Gemini.
 
 ```typescript
@@ -186,6 +206,7 @@ Main tool for handing off complex analysis from Claude Code to Gemini.
 ```
 
 ### trace_execution_path
+
 Deep execution analysis with Gemini's semantic understanding.
 
 ```typescript
@@ -201,6 +222,7 @@ Deep execution analysis with Gemini's semantic understanding.
 ```
 
 ### cross_system_impact
+
 Analyze impacts across service boundaries.
 
 ```typescript
@@ -214,6 +236,7 @@ Analyze impacts across service boundaries.
 ```
 
 ### performance_bottleneck
+
 Deep performance analysis beyond simple profiling.
 
 ```typescript
@@ -231,6 +254,7 @@ Deep performance analysis beyond simple profiling.
 ```
 
 ### hypothesis_test
+
 Test specific theories about code behavior.
 
 ```typescript
@@ -323,9 +347,80 @@ npm run lint
 npm run typecheck
 ```
 
+## Running the MCP Server
+
+### Different Ways to Execute
+
+#### Using Node.js directly
+
+```bash
+# Run the compiled JavaScript (recommended for production)
+node dist/index.js
+
+# This is equivalent to:
+node dist/   # Node.js will automatically look for index.js in the directory
+```
+
+#### Using npm scripts
+
+```bash
+# Development mode with file watching and auto-restart
+npm run dev
+
+# Production mode after building
+npm run build
+npm run start   # This runs: node dist/index.js
+```
+
+#### Using npx
+
+```bash
+# After publishing to npm (not yet available)
+npx deep-code-reasoning-mcp
+
+# Or locally after npm link
+npx deep-code-reasoning-mcp
+```
+
+#### Using other executables
+
+```bash
+# Direct TypeScript execution (development)
+npx tsx src/index.ts
+
+# Using ts-node (alternative TypeScript runner)
+npx ts-node --esm src/index.ts
+
+# Using Docker (if Dockerfile exists)
+docker run -e GEMINI_API_KEY=your-key deep-code-reasoning-mcp
+```
+
+### Key Differences
+
+- **`node dist/`** vs **`node dist/index.js`**: Both work the same way since Node.js defaults to looking for `index.js` in a directory
+- **`npm run start`**: Uses the exact command defined in package.json scripts
+- **`npm run dev`**: Uses tsx for TypeScript compilation and file watching
+- **`npx`**: Useful for running packages without global installation (future use)
+
+### Environment Setup
+
+All execution methods require the `GEMINI_API_KEY` environment variable:
+
+```bash
+export GEMINI_API_KEY=your-api-key
+node dist/index.js
+```
+
+Or using a `.env` file (recommended):
+
+```bash
+echo "GEMINI_API_KEY=your-api-key" > .env
+node dist/index.js
+```
+
 ## Architecture
 
-```
+```diagram
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
 │  Claude Code    │────▶│  MCP Server      │────▶│  Gemini API    │
 │  (Fast, Local, │     │  (Router &       │     │  (1M Context,   │
@@ -348,19 +443,23 @@ npm run typecheck
 ## Troubleshooting
 
 ### "GEMINI_API_KEY not found"
+
 - Ensure you've set the `GEMINI_API_KEY` in your `.env` file or environment
 - Check that the `.env` file is in the project root
 
 ### "File not found" errors
+
 - Verify that file paths passed to the tools are absolute paths
 - Check file permissions
 
 ### Gemini API errors
+
 - Verify your API key is valid and has appropriate permissions
 - Check API quotas and rate limits
 - Ensure your Google Cloud project has the Gemini API enabled
 
 ### Validation errors
+
 - The server uses Zod for parameter validation
 - Ensure all required parameters are provided
 - Check that parameter names use snake_case (e.g., `claude_context`, not `claudeContext`)
@@ -406,6 +505,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 If you encounter any issues or have questions:
+
 - Open an issue on [GitHub Issues](https://github.com/Haasonsaas/deep-code-reasoning-mcp/issues)
 - Check the [troubleshooting section](#troubleshooting) above
 - Review the [MCP documentation](https://modelcontextprotocol.com)

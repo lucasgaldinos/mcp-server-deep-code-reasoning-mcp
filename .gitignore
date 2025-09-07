@@ -32,6 +32,8 @@ coverage/
 logs/
 *.log
 
+*.knowledge_base
+
 # Runtime data
 pids/
 *.pid

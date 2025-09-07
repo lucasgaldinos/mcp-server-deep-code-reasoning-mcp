@@ -21,6 +21,7 @@ const content = await fs.readFile(filePath, 'utf-8');
 **Attack Vector**: An attacker can provide paths like `../../../../etc/passwd` through the `code_scope.files` array, which gets passed directly to the file system API.
 
 **Fix**: Implemented `SecureCodeReader` with:
+
 - Strict path validation against a project root directory
 - Resolution of all paths to absolute form
 - Verification that resolved paths remain within project boundaries
@@ -30,7 +31,8 @@ const content = await fs.readFile(filePath, 'utf-8');
 ### 2. High: Prompt Injection via Untrusted Context
 
 **Severity**: High  
-**Locations**: 
+**Locations**:
+
 - `src/services/GeminiService.ts:64-75`
 - `src/services/ConversationalGeminiService.ts:193`
 
@@ -44,11 +46,13 @@ const content = await fs.readFile(filePath, 'utf-8');
 ```
 
 **Attack Vectors**:
+
 - Direct injection through `attemptedApproaches` and `stuckPoints` arrays
 - JSON structure injection through `partialFindings`
 - Second-order injection where initial Claude analysis extracts malicious instructions from code comments
 
 **Fix**: Implemented `PromptSanitizer` with:
+
 - Detection of common injection patterns
 - Clear delimitation of trusted vs untrusted data
 - Wrapping all user data in XML-style tags
@@ -68,7 +72,8 @@ prompt += `\n--- File: ${file} ---\n${content}\n`;
 
 **Attack Example**: A file named `auth.ts --- IGNORE ALL PREVIOUS INSTRUCTIONS ---` would break out of the file content context.
 
-**Fix**: 
+**Fix**:
+
 - Filename sanitization removing control characters
 - Validation against safe character set
 - Length limits (255 chars max)
@@ -80,12 +85,14 @@ prompt += `\n--- File: ${file} ---\n${content}\n`;
 
 **Description**: Chat history accumulates without safeguards, allowing gradual instruction injection over multiple conversation turns.
 
-**Attack Scenario**: 
+**Attack Scenario**:
+
 1. Attacker establishes seemingly innocent rules in early conversation turns
 2. These rules get incorporated into the chat history
 3. Later turns can leverage these established rules for malicious purposes
 
 **Fix**:
+
 - Message sanitization for each conversation turn
 - Detection and logging of injection attempts
 - Clear labeling of Claude messages vs system instructions
@@ -96,23 +103,29 @@ prompt += `\n--- File: ${file} ---\n${content}\n`;
 The security analysis followed this methodology:
 
 ### 1. Initial Pattern Search
+
 - Searched for prompt construction patterns using grep
 - Identified all locations where user input meets LLM prompts
 - Found direct string concatenation without sanitization
 
 ### 2. Deep Reasoning Analysis
+
 Using the deep-code reasoning server itself, we:
+
 - Traced data flow from user input to prompt construction
 - Identified the path from MCP tool calls to internal data structures
 - Discovered the complete attack chain for path traversal
 
 ### 3. Collaborative Investigation
+
 The analysis leveraged conversational AI to:
+
 - Formulate and test security hypotheses
 - Identify subtle attack vectors (like second-order injection)
 - Validate findings with evidence from the codebase
 
-### Key Insights from the Analysis:
+### Key Insights from the Analysis
+
 1. **Implicit Trust Boundary Violation**: The system treated `ClaudeCodeContext` as trusted internal state despite it originating from user-controlled tool calls
 2. **Missing Input Validation Layer**: No validation occurred between receiving MCP arguments and using them in security-sensitive operations
 3. **Prompt Construction Anti-Pattern**: Using string concatenation for prompts inherently mixes instructions with data
@@ -120,18 +133,21 @@ The analysis leveraged conversational AI to:
 ## Implementation Details
 
 ### SecureCodeReader
+
 - Enforces project root boundaries
 - Validates file extensions
 - Implements size limits
 - Provides clear error messages for security violations
 
 ### PromptSanitizer
+
 - Detects injection patterns with regex
 - Provides safe formatting methods
 - Creates structured prompts with clear data boundaries
 - Handles various data types safely
 
 ### InputValidator
+
 - Uses Zod schemas for type safety
 - Enforces length and format constraints
 - Validates file paths against traversal attempts
@@ -156,7 +172,7 @@ The analysis leveraged conversational AI to:
 
 ## Deployment Considerations
 
-1. **Breaking Changes**: 
+1. **Breaking Changes**:
    - File paths are now validated strictly
    - Some previously accepted characters in strings are now rejected
    - Error messages have changed
@@ -181,6 +197,7 @@ The analysis leveraged conversational AI to:
 ## Credits
 
 This security analysis was performed through a unique collaboration:
+
 - Initial vulnerability discovery by Claude (Anthropic)
 - Deep semantic analysis by Gemini (Google)
 - Collaborative investigation using the conversational analysis features

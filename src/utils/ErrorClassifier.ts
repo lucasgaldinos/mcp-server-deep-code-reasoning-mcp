@@ -2,7 +2,9 @@
  * Shared utility for classifying and categorizing errors
  */
 
-import { SessionError, ApiError, FileSystemError, RateLimitError } from '../errors/index.js';
+import type {
+} from '@models/types.js';
+import { SessionError, ApiError, FileSystemError, RateLimitError } from '@errors/index.js';
 
 export interface ClassifiedError {
   category: 'session' | 'api' | 'filesystem' | 'unknown';

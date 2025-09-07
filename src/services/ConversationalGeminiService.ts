@@ -2,9 +2,9 @@ import { GoogleGenerativeAI, ChatSession } from '@google/generative-ai';
 import type {
   ClaudeCodeContext,
   DeepAnalysisResult,
-} from '../models/types.js';
-import { SessionNotFoundError } from '../errors/index.js';
-import { PromptSanitizer } from '../utils/PromptSanitizer.js';
+} from '@models/types.js';
+import { SessionNotFoundError } from '@errors/index.js';
+import { PromptSanitizer } from '@utils/PromptSanitizer.js';
 
 export interface ConversationContext {
   sessionId: string;

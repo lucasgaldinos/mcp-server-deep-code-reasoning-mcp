@@ -3,14 +3,14 @@ import type {
   DeepAnalysisResult,
   CodeLocation,
   TournamentResult,
-} from '../models/types.js';
-import { GeminiService } from '../services/GeminiService.js';
-import { ConversationalGeminiService } from '../services/ConversationalGeminiService.js';
-import { ConversationManager } from '../services/ConversationManager.js';
-import { SecureCodeReader } from '../utils/SecureCodeReader.js';
-import { ErrorClassifier } from '../utils/ErrorClassifier.js';
-import { ConversationLockedError, SessionNotFoundError } from '../errors/index.js';
-import { HypothesisTournamentService } from '../services/HypothesisTournamentService.js';
+} from '@models/types.js';
+import { GeminiService } from '@services/GeminiService.js';
+import { ConversationalGeminiService } from '@services/ConversationalGeminiService.js';
+import { ConversationManager } from '@services/ConversationManager.js';
+import { SecureCodeReader } from '@utils/SecureCodeReader.js';
+import { ErrorClassifier } from '@utils/ErrorClassifier.js';
+import { ConversationLockedError, SessionNotFoundError } from '@errors/index.js';
+import { HypothesisTournamentService } from '@services/HypothesisTournamentService.js';
 
 export class DeepCodeReasonerV2 {
   private geminiService: GeminiService;
@@ -551,9 +551,9 @@ export class DeepCodeReasonerV2 {
       // Override tournament config if provided
       const tournament = tournamentConfig
         ? new HypothesisTournamentService(
-            this.geminiApiKey,
-            tournamentConfig,
-          )
+          this.geminiApiKey,
+          tournamentConfig,
+        )
         : this.tournamentService;
 
       // Run the tournament

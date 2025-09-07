@@ -7,9 +7,9 @@ import type {
   PerformanceIssue,
   SystemImpact,
   RootCause,
-} from '../models/types.js';
-import { ApiError, RateLimitError } from '../errors/index.js';
-import { PromptSanitizer } from '../utils/PromptSanitizer.js';
+} from '@models/types.js';
+import { ApiError, RateLimitError } from '@errors/index.js';
+import { PromptSanitizer } from '@utils/PromptSanitizer.js';
 
 export class GeminiService {
   private genAI: GoogleGenerativeAI;

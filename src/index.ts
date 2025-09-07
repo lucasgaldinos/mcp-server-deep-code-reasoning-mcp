@@ -10,11 +10,12 @@ import {
 import { z } from 'zod';
 import * as dotenv from 'dotenv';
 
-import { DeepCodeReasonerV2 } from './analyzers/DeepCodeReasonerV2.js';
-import type { ClaudeCodeContext } from './models/types.js';
-import { ErrorClassifier } from './utils/ErrorClassifier.js';
-import { InputValidator } from './utils/InputValidator.js';
-import { logger } from './utils/Logger.js';
+import { DeepCodeReasonerV2 } from '@analyzers/DeepCodeReasonerV2.js';
+import type { ClaudeCodeContext } from '@models/types.js';
+import { ErrorClassifier } from '@utils/ErrorClassifier.js';
+import { InputValidator } from '@utils/InputValidator.js';
+import { logger } from '@utils/Logger.js';
+import { HealthChecker, BuiltinHealthChecks } from '@utils/HealthChecker.js';
 
 // Load environment variables
 dotenv.config();
@@ -38,6 +39,17 @@ let deepReasoner: DeepCodeReasonerV2 | null = null;
 if (GEMINI_API_KEY) {
   deepReasoner = new DeepCodeReasonerV2(GEMINI_API_KEY);
 }
+
+// Initialize health monitoring system
+const healthChecker = HealthChecker.getInstance();
+
+// Register built-in health checks
+healthChecker.registerCheck(BuiltinHealthChecks.memoryUsage());
+healthChecker.registerCheck(BuiltinHealthChecks.systemStartup());
+healthChecker.registerCheck(BuiltinHealthChecks.eventBus());
+
+// Start health monitoring
+healthChecker.start();
 
 const EscalateAnalysisSchema = z.object({
   claude_context: z.object({
@@ -141,6 +153,15 @@ const RunHypothesisTournamentSchema = z.object({
     max_rounds: z.number().min(1).max(5).optional(),
     parallel_sessions: z.number().min(1).max(10).optional(),
   }).optional(),
+});
+
+// Health check schemas
+const HealthCheckSchema = z.object({
+  check_name: z.string().optional(),
+});
+
+const HealthSummarySchema = z.object({
+  include_details: z.boolean().optional().default(true),
 });
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -490,6 +511,33 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['claude_context', 'issue'],
         },
       },
+      {
+        name: 'health_check',
+        description: 'Execute a specific health check or all health checks',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            check_name: {
+              type: 'string',
+              description: 'Name of specific health check to run. If omitted, runs all checks.',
+            },
+          },
+        },
+      },
+      {
+        name: 'health_summary',
+        description: 'Get comprehensive health status of the MCP server',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            include_details: {
+              type: 'boolean',
+              default: true,
+              description: 'Include detailed check results in the summary',
+            },
+          },
+        },
+      },
     ],
   };
 });
@@ -761,6 +809,76 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      case 'health_check': {
+        const parsed = HealthCheckSchema.parse(args);
+
+        if (parsed.check_name) {
+          // Execute specific health check
+          const result = await healthChecker.executeCheck(parsed.check_name);
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  check: result,
+                  timestamp: new Date().toISOString(),
+                }, null, 2),
+              },
+            ],
+          };
+        } else {
+          // Execute all health checks
+          const results = await healthChecker.executeAllChecks();
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  checks: results,
+                  totalChecks: results.length,
+                  healthyChecks: results.filter(r => r.status === 'healthy').length,
+                  timestamp: new Date().toISOString(),
+                }, null, 2),
+              },
+            ],
+          };
+        }
+      }
+
+      case 'health_summary': {
+        const parsed = HealthSummarySchema.parse(args);
+        const summary = await healthChecker.getHealthSummary();
+
+        if (!parsed.include_details) {
+          // Return minimal summary without individual check details
+          const minimalSummary = {
+            status: summary.status,
+            totalChecks: summary.totalChecks,
+            timestamp: summary.timestamp,
+            uptime: summary.uptime,
+            version: summary.version,
+          };
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(minimalSummary, null, 2),
+              },
+            ],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(summary, null, 2),
+            },
+          ],
+        };
+      }
+
       default:
         throw new McpError(
           ErrorCode.MethodNotFound,
@@ -813,19 +931,31 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 async function main() {
   logger.info('Starting Deep Code Reasoning MCP server...');
-  
+
   const transport = new StdioServerTransport();
   logger.info('Connecting to transport...');
-  
+
   await server.connect(transport);
-  
+
   logger.info('Server connected successfully');
   logger.info(`GEMINI_API_KEY: ${GEMINI_API_KEY ? 'configured' : 'NOT CONFIGURED - server will return errors'}`);
   logger.info('Using Gemini model: gemini-2.5-pro-preview-05-06');
   logger.info('Ready to handle requests');
+
+  // Setup graceful shutdown
+  const shutdown = () => {
+    logger.info('Received shutdown signal, stopping health monitoring...');
+    healthChecker.stop();
+    logger.info('Health monitoring stopped');
+    process.exit(0);
+  };
+
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
 }
 
 main().catch((error) => {
   logger.error('Fatal error in main():', error);
+  healthChecker.stop();
   process.exit(1);
 });
