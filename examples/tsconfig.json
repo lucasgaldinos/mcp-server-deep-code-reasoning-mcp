@@ -1,0 +1,22 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "..",
+    "paths": {
+      "@src/*": ["../src/*"],
+      "@models/*": ["../src/models/*"],
+      "@services/*": ["../src/services/*"],
+      "@utils/*": ["../src/utils/*"],
+      "@analyzers/*": ["../src/analyzers/*"],
+      "@errors/*": ["../src/errors/*"]
+    }
+  },
+  "include": [
+    "*.ts",
+    "../src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

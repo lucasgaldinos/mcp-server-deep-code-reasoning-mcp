@@ -94,9 +94,14 @@ async function demonstrateConversationalAnalysis() {
     );
     
     console.log("🔍 Analysis Result:");
-    console.log("Issues found:", directAnalysis.findings.issues.length);
-    directAnalysis.findings.issues.forEach((issue, i) => {
-      console.log(`  ${i + 1}. ${issue.type}: ${issue.description}`);
+    console.log("Root causes found:", directAnalysis.findings.rootCauses.length);
+    directAnalysis.findings.rootCauses.forEach((cause, i) => {
+      console.log(`  ${i + 1}. ${cause.type}: ${cause.description} (confidence: ${cause.confidence})`);
+    });
+    
+    console.log("Performance bottlenecks found:", directAnalysis.findings.performanceBottlenecks.length);
+    directAnalysis.findings.performanceBottlenecks.forEach((bottleneck, i) => {
+      console.log(`  ${i + 1}. ${bottleneck.type}: ${bottleneck.suggestion}`);
     });
     
     // Demonstrate 2: Conversational Analysis

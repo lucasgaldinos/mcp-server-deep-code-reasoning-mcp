@@ -1,7 +1,15 @@
 // Example: E-commerce service with performance issues
 // This demonstrates a typical N+1 query pattern that Claude Code might struggle to identify
 
-import { Database } from './database';
+// Mock database module for simulation
+import { createDatabase, Database } from './mock-database.js';
+
+// Mock database interface for demonstration
+interface MockUserService {
+  getUser(id: number): Promise<any>;
+  getUsersWithPosts(): Promise<any[]>;
+  createUser(userData: any): Promise<number>;
+}
 
 class OrderService {
   private db: Database;
