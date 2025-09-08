@@ -13,8 +13,8 @@ import { jest, describe, test, expect, beforeEach, afterEach } from '@jest/globa
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { JSDocGenerator, JSDocValidationResult, JSDocReport } from '../utils/JsDocGenerator';
-import { JSDocCLI } from '../tools/jsdoc-cli';
+import { JSDocGenerator, JSDocValidationResult, JSDocReport } from '../utils/JsDocGenerator.js';
+import { JSDocCLI } from '../tools/jsdoc-cli.js';
 
 describe('JSDocGenerator', () => {
   let tempDir: string;
@@ -215,11 +215,11 @@ export type Status = 'pending' | 'completed' | 'failed';
       expect(results).toHaveLength(5); // UserService, getUser, updateUser, UserData, GetUserOptions
       
       // All elements should be valid
-      const validResults = results.filter(r => r.isValid);
+      const validResults = results.filter((r: JSDocValidationResult) => r.isValid);
       expect(validResults).toHaveLength(5);
 
       // Check specific validation
-      const getUserMethod = results.find(r => r.elementName === 'getUser');
+      const getUserMethod = results.find((r: JSDocValidationResult) => r.elementName === 'getUser');
       expect(getUserMethod).toBeDefined();
       expect(getUserMethod!.isValid).toBe(true);
       expect(getUserMethod!.elementType).toBe('method');
@@ -233,11 +233,11 @@ export type Status = 'pending' | 'completed' | 'failed';
       expect(results.length).toBeGreaterThan(0);
       
       // Most elements should be invalid
-      const invalidResults = results.filter(r => !r.isValid);
+      const invalidResults = results.filter((r: JSDocValidationResult) => !r.isValid);
       expect(invalidResults.length).toBeGreaterThan(0);
 
       // Check specific issues
-      const fetchDataMethod = results.find(r => r.elementName === 'fetchData');
+      const fetchDataMethod = results.find((r: JSDocValidationResult) => r.elementName === 'fetchData');
       expect(fetchDataMethod).toBeDefined();
       expect(fetchDataMethod!.isValid).toBe(false);
       expect(fetchDataMethod!.missingTags).toContain('description');
@@ -250,17 +250,17 @@ export type Status = 'pending' | 'completed' | 'failed';
       expect(results.length).toBeGreaterThan(0);
 
       // Should have both valid and invalid results
-      const validResults = results.filter(r => r.isValid);
-      const invalidResults = results.filter(r => !r.isValid);
+      const validResults = results.filter((r: JSDocValidationResult) => r.isValid);
+      const invalidResults = results.filter((r: JSDocValidationResult) => !r.isValid);
       
       expect(validResults.length).toBeGreaterThan(0);
       expect(invalidResults.length).toBeGreaterThan(0);
 
       // Check specific elements
-      const goodMethod = results.find(r => r.elementName === 'goodMethod');
+      const goodMethod = results.find((r: JSDocValidationResult) => r.elementName === 'goodMethod');
       expect(goodMethod!.isValid).toBe(true);
 
-      const badMethod = results.find(r => r.elementName === 'badMethod');
+      const badMethod = results.find((r: JSDocValidationResult) => r.elementName === 'badMethod');
       expect(badMethod!.isValid).toBe(false);
     });
 
@@ -324,7 +324,7 @@ export class TestClass {
 
       // Check element type statistics
       expect(report.statistics.byElementType).toBeDefined();
-      Object.values(report.statistics.byElementType).forEach(stats => {
+      Object.values(report.statistics.byElementType).forEach((stats: any) => {
         expect(stats.total).toBeGreaterThanOrEqual(0);
         expect(stats.documented).toBeGreaterThanOrEqual(0);
         expect(stats.documented).toBeLessThanOrEqual(stats.total);
@@ -346,7 +346,7 @@ export class TestClass {
       expect(report.recommendations.length).toBeGreaterThan(0);
       
       // Should contain coverage-based recommendations
-      const haseCoverageRecommendation = report.recommendations.some(rec => 
+      const haseCoverageRecommendation = report.recommendations.some((rec: any) => 
         rec.toLowerCase().includes('coverage') || rec.toLowerCase().includes('documentation')
       );
       expect(haseCoverageRecommendation).toBe(true);
@@ -479,7 +479,7 @@ export function testFunction(): void {}
         customRequirements
       });
 
-      const functionResult = results.find(r => r.elementName === 'testFunction');
+      const functionResult = results.find((r: JSDocValidationResult) => r.elementName === 'testFunction');
       expect(functionResult!.isValid).toBe(true);
     });
   });

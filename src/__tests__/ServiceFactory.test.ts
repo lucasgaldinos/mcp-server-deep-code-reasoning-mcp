@@ -17,7 +17,7 @@ import {
   CircularDependencyError,
   ServiceRegistration,
   ContainerConfig
-} from '../utils/ServiceFactory';
+} from '../utils/ServiceFactory.js';
 
 // Mock services for testing
 class MockDatabase {
