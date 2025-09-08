@@ -43,21 +43,115 @@ Architecture Decision Records (ADRs) documenting important design choices.
 
 ### Getting Started
 
-1. [Installation Guide](../README.md#installation)
-2. [Configuration Guide](../README.md#configuration)
-3. First Analysis guide *(coming soon)*
+1. **[Installation & Configuration Guide](guides/installation-and-configuration.md)** - Complete setup instructions
+2. **[User Guide](guides/user-guide.md)** - Comprehensive usage guide with examples
+3. **[Examples & Tutorials](guides/examples-and-tutorials.md)** - Step-by-step tutorials for common scenarios
 
-### Development
+### Technical Reference
 
-1. Development Setup guide *(coming soon)*
-2. [Contributing Guidelines](../CONTRIBUTING.md)
-3. [Code Organization](../src/README.md)
+1. **[Architecture Overview](reference/architecture.md)** - System design and component architecture
+2. **[API Reference](reference/api-reference.md)** - Complete API schemas and tool documentation
+3. **[Tools Reference](reference/tools-reference.md)** - Detailed tool usage guide with parameters
 
-### Reference
+### Development & Decisions
 
-1. API Reference *(coming soon)*
-2. Configuration Schema *(coming soon)*
-3. [Type Definitions](../src/models/types.ts)
+1. **[Architecture Decisions](decisions/deep-code-reasoning-improvements.md)** - Design decisions and rationale
+2. **[Implementation Summary](reference/IMPLEMENTATION_SUMMARY.md)** - Current status and next steps
+3. **[Workspace Organization](reference/workspace-reorganization-summary.md)** - Project structure documentation
+
+## Documentation Overview
+
+### 📚 Guides (Learning-Oriented)
+
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| [Installation & Configuration](guides/installation-and-configuration.md) | Complete setup process | New users, developers |
+| [User Guide](guides/user-guide.md) | Day-to-day usage patterns | All users |
+| [Examples & Tutorials](guides/examples-and-tutorials.md) | Hands-on learning | Developers |
+
+### 📖 Reference (Information-Oriented)
+
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| [Architecture](reference/architecture.md) | System design overview | Architects, developers |
+| [API Reference](reference/api-reference.md) | Complete API documentation | Developers, integrators |
+| [Tools Reference](reference/tools-reference.md) | Tool usage specification | Users, developers |
+
+### 🏗️ Decisions (Understanding-Oriented)
+
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| [Deep Code Reasoning Improvements](decisions/deep-code-reasoning-improvements.md) | Architecture decisions | Technical team |
+| [Implementation Summary](reference/IMPLEMENTATION_SUMMARY.md) | Project status | Project managers |
+
+## Key Features Documented
+
+### ✅ Comprehensive Coverage
+
+- **13 MCP Tools**: Complete documentation for all analysis tools
+- **Multi-Model Workflow**: Claude Code ↔ Gemini AI integration patterns
+- **Conversational Analysis**: AI-to-AI conversation capabilities
+- **Hypothesis Testing**: Systematic theory validation
+- **Health Monitoring**: Operational monitoring and metrics
+- **Performance Analysis**: Deep execution tracing and bottleneck detection
+
+### ✅ Practical Examples
+
+- **Real-World Scenarios**: Performance debugging, memory leaks, distributed systems
+- **Step-by-Step Tutorials**: Complete workflows from problem to solution
+- **Code Examples**: TypeScript/JavaScript implementation patterns
+- **Configuration Samples**: Production-ready setup examples
+
+### ✅ Technical Depth
+
+- **Architecture Diagrams**: System design with Mermaid diagrams
+- **API Schemas**: Complete JSON schemas for all tools
+- **Error Handling**: Comprehensive error classification and recovery
+- **Security Guidelines**: Best practices for safe operation
+
+## Recent Updates
+
+- ✅ **Complete Documentation Suite**: All major documentation categories covered
+- ✅ **Architecture Documentation**: Comprehensive system design overview
+- ✅ **API Reference**: Complete schemas and examples for all 13 tools
+- ✅ **User Guide**: End-to-end usage documentation with practical examples
+- ✅ **Installation Guide**: Multiple installation methods and troubleshooting
+- ✅ **Examples & Tutorials**: Real-world scenarios and step-by-step tutorials
+
+## Contributing to Documentation
+
+This documentation follows the [Documentation System](https://documentation.divio.com/) principles:
+
+- **guides/**: Learning-oriented tutorials and how-to guides
+- **reference/**: Information-oriented technical reference  
+- **decisions/**: Architecture decisions and design rationale
+
+### Documentation Standards
+
+- **Mermaid Diagrams**: For architecture and flow diagrams
+- **JSON Schemas**: For API documentation
+- **TypeScript Examples**: For code samples
+- **Markdown Linting**: All files pass markdownlint validation
+
+### When Adding New Documentation
+
+1. Choose the appropriate directory based on content type
+2. Follow the existing naming conventions (`kebab-case.md`)
+3. Update this index file with appropriate links
+4. Ensure cross-references are accurate and working
+5. Include practical examples where applicable
+6. Add appropriate metadata headers
+
+### Quality Assurance
+
+- All examples are tested and validated
+- API schemas match actual implementation
+- Links are verified and functional
+- Content is reviewed for accuracy and completeness
+
+---
+
+*This documentation provides comprehensive coverage of the Deep Code Reasoning MCP Server. For questions or suggestions, please open an issue in the repository.*
 
 ## Documentation Standards
 

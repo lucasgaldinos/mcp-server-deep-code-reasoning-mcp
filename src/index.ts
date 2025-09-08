@@ -16,16 +16,39 @@ import { ErrorClassifier } from '@utils/ErrorClassifier.js';
 import { InputValidator } from '@utils/InputValidator.js';
 import { logger } from '@utils/Logger.js';
 import { HealthChecker, BuiltinHealthChecks } from '@utils/HealthChecker.js';
+import { EnvironmentValidator } from '@utils/EnvironmentValidator.js';
 
 // Load environment variables
 dotenv.config();
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+// Validate environment configuration
+const envConfig = (() => {
+  try {
+    const config = EnvironmentValidator.getValidatedConfig();
+    
+    // Print configuration summary in development mode
+    if (config.enableDevMode || config.nodeEnv === 'development') {
+      console.log('\n🔧 Environment Configuration:');
+      EnvironmentValidator.printConfigSummary(config);
+      console.log('');
+    }
+    
+    return config;
+  } catch (error) {
+    console.error('❌ Environment validation failed:');
+    console.error(error instanceof Error ? error.message : String(error));
+    console.error('\n💡 Please check your .env file and ensure all required variables are set.');
+    console.error('📖 See .env.example for configuration options.');
+    process.exit(1);
+  }
+})();
+
+const GEMINI_API_KEY = envConfig.geminiApiKey;
 
 const server = new Server(
   {
-    name: 'deep-code-reasoning-mcp',
-    version: '0.1.0',
+    name: envConfig.mcpServerName,
+    version: envConfig.mcpServerVersion,
   },
   {
     capabilities: {
