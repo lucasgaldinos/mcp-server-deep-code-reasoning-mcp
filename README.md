@@ -333,19 +333,50 @@ When you have theories but need extensive testing:
 
 ## Development
 
+### Enhanced Testing Strategy
+
+This project follows professional testing practices that prioritize **real functionality testing** over superficial mocks:
+
+- **Real API Integration Testing**: Tests validate actual Gemini API interactions, error handling, and security features
+- **Error-First Testing**: Tests are designed to capture real failure modes (authentication errors, rate limits, network timeouts)
+- **Security Validation**: Prompt injection protection and input sanitization are tested with real malicious inputs
+- **Business Logic Verification**: Tests validate actual code analysis workflows rather than just method existence
+
+### Development Commands
+
 ```bash
-# Run in development mode
+# Run in development mode with auto-reload
 npm run dev
 
-# Run tests
+# Build the project
+npm run build
+
+# Run comprehensive test suite (includes real functionality tests)
 npm test
+
+# Run specific test patterns
+npm test -- --testPathPattern=GeminiService.test.ts
 
 # Lint code
 npm run lint
 
-# Type check
+# Type check without compilation
 npm run typecheck
+
+# Run all quality checks
+npm run build && npm run typecheck && npm run lint && npm test
 ```
+
+### Testing Philosophy
+
+Our test suite is designed following the principle that **"tests should measure real usage, not just pass with mocks"**:
+
+- ✅ **Real API Calls**: Tests interact with actual services to validate integration points
+- ✅ **Actual Error Conditions**: Authentication failures, rate limits, and network issues are tested with real scenarios  
+- ✅ **Security Features**: Prompt injection protection is validated with actual malicious inputs
+- ✅ **End-to-End Workflows**: Complete analysis workflows are tested from input to output
+
+This approach ensures that tests catch real issues that would affect users, rather than just verifying that mocks return expected values.
 
 ## Running the MCP Server
 

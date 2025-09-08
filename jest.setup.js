@@ -7,7 +7,7 @@
 
 // Optional: restore console after tests if needed
 afterEach(() => {
-  if (typeof jest !== 'undefined') {
-    jest.clearAllMocks();
-  }
+	if (typeof jest !== "undefined") {
+		jest.clearAllMocks();
+	}
 });

@@ -2,11 +2,11 @@
 
 /**
  * JSDoc Documentation Analysis CLI Tool
- * 
+ *
  * Command-line tool for analyzing and reporting JSDoc documentation coverage
  * across TypeScript projects. Provides detailed analysis, validation, and
  * improvement suggestions for comprehensive code documentation.
- * 
+ *
  * @author Deep Code Reasoning MCP Team
  * @version 1.0.0
  * @since 2024
@@ -42,7 +42,7 @@ interface CliOptions {
 
 /**
  * JSDoc Documentation CLI Tool
- * 
+ *
  * Provides comprehensive analysis and reporting of JSDoc documentation
  * coverage across TypeScript projects with detailed validation results.
  */
@@ -53,26 +53,26 @@ class JSDocCLI {
     strictMode: false,
     format: 'console',
     verbose: false,
-    help: false
+    help: false,
   };
 
   /**
    * Main entry point for the CLI tool
-   * 
+   *
    * @param args - Command line arguments
    * @returns Promise resolving to exit code
-   * 
+   *
    * @example
    * ```bash
    * node jsdoc-cli.js ./src --format=json --output=jsdoc-report.json
    * ```
-   * 
+   *
    * @since 1.0.0
    */
   static async main(args: string[]): Promise<number> {
     try {
       const options = this.parseArguments(args);
-      
+
       if (options.help) {
         this.printHelp();
         return 0;
@@ -85,17 +85,17 @@ class JSDocCLI {
       }
 
       console.log('🔍 Analyzing JSDoc documentation...\n');
-      
+
       const report = await JSDocGenerator.generateProjectReport(options.projectPath, {
         includeTests: options.includeTests,
         includePrivate: options.includePrivate,
         strictMode: options.strictMode,
         outputFormat: options.format,
-        outputPath: options.output
+        outputPath: options.output,
       });
 
       await this.displayReport(report, options);
-      
+
       // Check threshold if specified
       if (options.threshold !== undefined) {
         if (report.coverage < options.threshold) {
@@ -115,15 +115,15 @@ class JSDocCLI {
 
   /**
    * Parses command line arguments into options object
-   * 
+   *
    * @param args - Raw command line arguments
    * @returns Parsed options object
-   * 
+   *
    * @example
    * ```typescript
    * const options = JSDocCLI.parseArguments(['./src', '--verbose', '--format=json']);
    * ```
-   * 
+   *
    * @since 1.0.0
    */
   private static parseArguments(args: string[]): CliOptions {
@@ -135,7 +135,7 @@ class JSDocCLI {
       strictMode: false,
       format: 'console',
       verbose: false,
-      help: false
+      help: false,
     };
 
     for (let i = 0; i < args.length; i++) {
@@ -182,11 +182,11 @@ class JSDocCLI {
 
   /**
    * Displays JSDoc analysis report in the specified format
-   * 
+   *
    * @param report - JSDoc analysis report
    * @param options - CLI options for output formatting
    * @returns Promise resolving when display is complete
-   * 
+   *
    * @since 1.0.0
    */
   private static async displayReport(report: JSDocReport, options: CliOptions): Promise<void> {
@@ -215,10 +215,10 @@ class JSDocCLI {
 
   /**
    * Displays JSDoc report in console format
-   * 
+   *
    * @param report - JSDoc analysis report
    * @param verbose - Whether to show detailed information
-   * 
+   *
    * @since 1.0.0
    */
   private static displayConsoleReport(report: JSDocReport, verbose: boolean): void {
@@ -248,7 +248,7 @@ class JSDocCLI {
     if (verbose) {
       console.log('📁 Documentation by File:');
       console.log('─'.repeat(40));
-      
+
       const fileStats = Object.entries(report.statistics.byFile)
         .map(([file, stats]) => {
           const typedStats = stats as { total: number; documented: number; coverage: number };
@@ -286,13 +286,13 @@ class JSDocCLI {
     if (verbose && report.undocumentedElements > 0) {
       console.log('🔍 Issue Details:');
       console.log('─'.repeat(25));
-      
+
       const issuesByFile = Object.entries(report.fileResults)
         .map(([file, results]) => {
           const typedResults = results as Array<{ isValid: boolean }>;
           return {
             file: path.basename(file),
-            issues: typedResults.filter((r: { isValid: boolean }) => !r.isValid).length
+            issues: typedResults.filter((r: { isValid: boolean }) => !r.isValid).length,
           };
         })
         .filter(item => item.issues > 0)
@@ -307,7 +307,7 @@ class JSDocCLI {
 
     // Footer
     console.log(`Generated: ${new Date(report.generatedAt).toLocaleString()}`);
-    
+
     if (report.coverage >= 90) {
       console.log('\n🎉 Excellent documentation coverage! Keep up the great work!');
     } else if (report.coverage >= 70) {
@@ -319,15 +319,15 @@ class JSDocCLI {
 
   /**
    * Generates markdown format report
-   * 
+   *
    * @param report - JSDoc analysis report
    * @returns Markdown formatted report string
-   * 
+   *
    * @since 1.0.0
    */
   private static generateMarkdownReport(report: JSDocReport): string {
     const lines: string[] = [];
-    
+
     lines.push('# 📚 JSDoc Documentation Analysis Report');
     lines.push('');
     lines.push(`**Generated:** ${new Date(report.generatedAt).toLocaleString()}`);
@@ -386,16 +386,16 @@ class JSDocCLI {
 
   /**
    * Prints help information
-   * 
+   *
    * @since 1.0.0
    */
   private static printHelp(): void {
     console.log('📚 JSDoc Documentation Analysis CLI Tool');
     console.log('=======================================\n');
     console.log('Analyze and report JSDoc documentation coverage across TypeScript projects.\n');
-    
+
     this.printUsage();
-    
+
     console.log('Options:');
     console.log('  --help, -h              Show this help message');
     console.log('  --include-tests         Include test files in analysis');
@@ -419,7 +419,7 @@ class JSDocCLI {
 
   /**
    * Prints usage information
-   * 
+   *
    * @since 1.0.0
    */
   private static printUsage(): void {

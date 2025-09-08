@@ -36,7 +36,13 @@ export type SystemEventType =
   | 'system:shutdown'
   | 'system:health_check'
   | 'system:error'
-  | 'system:warning';
+  | 'system:warning'
+  | 'system:memory_monitoring_started'
+  | 'system:memory_monitoring_stopped'
+  | 'system:memory_cleanup_completed'
+  | 'system:emergency_cleanup_triggered'
+  | 'system:memory_status'
+  | 'system:conversation_cleanup_requested';
 
 /**
  * All supported event types

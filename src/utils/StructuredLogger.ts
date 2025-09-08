@@ -1,11 +1,11 @@
 /**
  * @fileoverview Enhanced Structured Logging System
- * 
+ *
  * This module provides a comprehensive structured logging system that builds
  * upon the existing Logger foundation. It adds context support, structured
  * data logging, log levels, filtering, and advanced features for production
  * monitoring and debugging.
- * 
+ *
  * Key features:
  * - Structured log data with JSON formatting
  * - Hierarchical logging contexts
@@ -14,7 +14,7 @@
  * - Log aggregation and correlation IDs
  * - Custom log formatters and outputs
  * - Memory-efficient log buffering
- * 
+ *
  * @author Deep Code Reasoning MCP Server
  * @version 1.0.0
  * @since 2025-01-09
@@ -159,21 +159,21 @@ export class ConsoleLogFormatter implements ILogFormatter {
     const timestamp = entry.timestamp.toISOString();
     const context = entry.context ? ` [${entry.context.component}]` : '';
     const correlationId = entry.correlationId ? ` (${entry.correlationId.substring(0, 8)})` : '';
-    
+
     let output = `${color}${timestamp} ${level}${this.reset}${context}${correlationId} ${entry.message}`;
-    
+
     if (entry.data && Object.keys(entry.data).length > 0) {
       output += `\n  Data: ${JSON.stringify(entry.data, null, 2)}`;
     }
-    
+
     if (entry.error) {
       output += `\n  Error: ${entry.error instanceof Error ? entry.error.stack : entry.error}`;
     }
-    
+
     if (entry.performance?.duration) {
       output += `\n  Duration: ${entry.performance.duration}ms`;
     }
-    
+
     return output;
   }
 }
@@ -183,7 +183,7 @@ export class ConsoleLogFormatter implements ILogFormatter {
  */
 export class LevelLogFilter implements ILogFilter {
   constructor(private minLevel: LogLevel) {}
-  
+
   shouldLog(entry: ILogEntry): boolean {
     return entry.level >= this.minLevel;
   }
@@ -194,7 +194,7 @@ export class LevelLogFilter implements ILogFilter {
  */
 export class ContextLogFilter implements ILogFilter {
   constructor(private allowedComponents: string[]) {}
-  
+
   shouldLog(entry: ILogEntry): boolean {
     if (!entry.context?.component) return true;
     return this.allowedComponents.includes(entry.context.component);
@@ -203,7 +203,7 @@ export class ContextLogFilter implements ILogFilter {
 
 /**
  * Enhanced Structured Logger
- * 
+ *
  * Provides comprehensive logging with structured data, contexts,
  * performance metrics, and multiple output targets.
  */
@@ -224,7 +224,7 @@ export class StructuredLogger extends EventEmitter {
     super();
     this.legacyLogger = new Logger(`[${component}]`);
     this.context = { component };
-    
+
     // Setup default outputs
     this.addOutput({
       name: 'console',
@@ -233,11 +233,11 @@ export class StructuredLogger extends EventEmitter {
       format: 'console',
       target: 'console',
     });
-    
+
     // Setup default formatters
     this.formatters.set('json', new JsonLogFormatter());
     this.formatters.set('console', new ConsoleLogFormatter());
-    
+
     // Setup auto-flush
     this.setupAutoFlush();
   }
@@ -420,7 +420,7 @@ export class StructuredLogger extends EventEmitter {
     message: string,
     data?: Record<string, any>,
     error?: Error,
-    performance?: IPerformanceMetrics
+    performance?: IPerformanceMetrics,
   ): void {
     const entry: ILogEntry = {
       timestamp: new Date(),
@@ -441,7 +441,7 @@ export class StructuredLogger extends EventEmitter {
 
     // Add to buffer for batch processing
     this.logBuffer.push(entry);
-    
+
     // Immediately output critical messages
     if (level >= LogLevel.ERROR) {
       this.flushBuffer();
@@ -449,7 +449,7 @@ export class StructuredLogger extends EventEmitter {
 
     // Emit event for external listeners
     this.emit('log', entry);
-    
+
     // Fallback to legacy logger for MCP compliance
     this.legacyLoggerFallback(entry);
   }
@@ -470,7 +470,7 @@ export class StructuredLogger extends EventEmitter {
 
     const lines = stack.split('\n');
     const callerLine = lines[4]; // Skip error constructor, this method, log method, and public method
-    
+
     if (!callerLine) return {};
 
     const match = callerLine.match(/at (?:(.+?)\s+\()?(?:(.+?):(\d+):(\d+))\)?/);
@@ -488,7 +488,7 @@ export class StructuredLogger extends EventEmitter {
    */
   private legacyLoggerFallback(entry: ILogEntry): void {
     const message = `${entry.message}${entry.data ? ` ${JSON.stringify(entry.data)}` : ''}`;
-    
+
     switch (entry.level) {
       case LogLevel.TRACE:
       case LogLevel.DEBUG:
@@ -523,10 +523,10 @@ export class StructuredLogger extends EventEmitter {
     if (this.logBuffer.length === 0) return;
 
     const entriesToFlush = this.logBuffer.splice(0);
-    
+
     for (const [name, output] of this.outputs) {
       if (!output.enabled) continue;
-      
+
       try {
         this.writeToOutput(output, entriesToFlush);
       } catch (error) {
@@ -545,10 +545,10 @@ export class StructuredLogger extends EventEmitter {
     }
 
     const filteredEntries = entries.filter(entry => entry.level >= output.minLevel);
-    
+
     for (const entry of filteredEntries) {
       const formatted = formatter.format(entry);
-      
+
       switch (output.target) {
         case 'console':
           console.error(formatted); // Use stderr for MCP compliance
@@ -569,11 +569,11 @@ export class StructuredLogger extends EventEmitter {
   private writeToFile(output: ILogOutput, formatted: string): void {
     const filePath = output.options?.filePath || './logs/structured.log';
     const dir = path.dirname(filePath);
-    
+
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    
+
     fs.appendFileSync(filePath, formatted + '\n');
   }
 
@@ -613,11 +613,11 @@ export const LogLevelUtils = {
     const upperLevel = level.toUpperCase();
     return (LogLevel as any)[upperLevel] ?? LogLevel.INFO;
   },
-  
+
   toString(level: LogLevel): string {
     return LogLevel[level].toLowerCase();
   },
-  
+
   isValidLevel(level: string): boolean {
     return Object.values(LogLevel).includes(level.toUpperCase() as any);
   },

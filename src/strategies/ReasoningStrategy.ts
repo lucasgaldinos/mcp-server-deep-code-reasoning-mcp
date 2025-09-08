@@ -1,17 +1,17 @@
 /**
  * @fileoverview Reasoning Strategy Pattern Interface
- * 
+ *
  * This module defines the Strategy pattern interface for different analysis
  * approaches in the Deep Code Reasoning MCP Server. It provides a flexible
  * framework for implementing various reasoning strategies such as quick
  * analysis, deep analysis, performance optimization, and cross-system analysis.
- * 
+ *
  * Key features:
  * - Strategy pattern for analysis approaches
  * - Context-aware strategy selection
  * - Performance and resource constraints handling
  * - Extensible framework for new analysis types
- * 
+ *
  * @author Deep Code Reasoning MCP Server
  * @version 1.0.0
  * @since 2025-01-09
@@ -80,7 +80,7 @@ export interface IStrategyMetrics {
 
 /**
  * Reasoning Strategy Interface
- * 
+ *
  * Defines the contract for all analysis strategies in the system.
  * Strategies implement different approaches to code analysis based on
  * context, constraints, and requirements.
@@ -95,7 +95,7 @@ export interface IReasoningStrategy {
 
   /**
    * Execute analysis using this strategy
-   * 
+   *
    * @param context - Analysis context with files, query, and constraints
    * @returns Promise resolving to analysis result
    */
@@ -103,7 +103,7 @@ export interface IReasoningStrategy {
 
   /**
    * Check if this strategy can handle the given context
-   * 
+   *
    * @param context - Analysis context to evaluate
    * @returns Suitability score (0-1, higher is better)
    */
@@ -111,7 +111,7 @@ export interface IReasoningStrategy {
 
   /**
    * Estimate resource requirements for the given context
-   * 
+   *
    * @param context - Analysis context to evaluate
    * @returns Estimated time (ms) and memory (bytes) requirements
    */
@@ -128,7 +128,7 @@ export interface IReasoningStrategy {
 
   /**
    * Update strategy configuration
-   * 
+   *
    * @param config - Strategy-specific configuration
    */
   configure(config: Record<string, any>): void;
@@ -152,7 +152,7 @@ export interface IReasoningStrategy {
 export interface IStrategySelector {
   /**
    * Select the best strategy for the given context
-   * 
+   *
    * @param context - Analysis context
    * @param availableStrategies - Available strategies to choose from
    * @returns Selected strategy or null if none suitable
@@ -164,7 +164,7 @@ export interface IStrategySelector {
 
   /**
    * Rank strategies by suitability for the given context
-   * 
+   *
    * @param context - Analysis context
    * @param availableStrategies - Available strategies to rank
    * @returns Strategies ranked by suitability (best first)
@@ -242,20 +242,20 @@ export abstract class BaseReasoningStrategy implements IReasoningStrategy {
    */
   protected updateMetrics(result: IAnalysisResult): void {
     const totalExec = this.metrics.totalExecutions;
-    
+
     // Update averages using incremental calculation
-    this.metrics.averageExecutionTime = 
+    this.metrics.averageExecutionTime =
       (this.metrics.averageExecutionTime * totalExec + result.executionTime) / (totalExec + 1);
-    
-    this.metrics.averageConfidence = 
+
+    this.metrics.averageConfidence =
       (this.metrics.averageConfidence * totalExec + result.confidence) / (totalExec + 1);
-    
-    this.metrics.successRate = 
+
+    this.metrics.successRate =
       (this.metrics.successRate * totalExec + (result.success ? 1 : 0)) / (totalExec + 1);
-    
-    this.metrics.memoryEfficiency = 
+
+    this.metrics.memoryEfficiency =
       (this.metrics.memoryEfficiency * totalExec + (1 / (result.memoryUsed + 1))) / (totalExec + 1);
-    
+
     this.metrics.totalExecutions++;
     this.metrics.lastUsed = new Date();
   }
@@ -269,7 +269,7 @@ export abstract class BaseReasoningStrategy implements IReasoningStrategy {
     confidence: number,
     executionTime: number,
     memoryUsed: number,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): IAnalysisResult {
     const result: IAnalysisResult = {
       success,

@@ -6,14 +6,14 @@
 export interface IEnvironmentConfig {
   // Required configuration
   geminiApiKey: string;
-  
+
   // Server configuration
   nodeEnv: string;
   mcpServerName: string;
   mcpServerVersion: string;
   requestTimeout: number;
   maxConcurrentRequests: number;
-  
+
   // Gemini AI configuration
   geminiModel: string;
   geminiApiVersion: string;
@@ -24,7 +24,7 @@ export interface IEnvironmentConfig {
   geminiConversationTemperature: number;
   geminiConversationMaxTokens: number;
   maxContextSize: number;
-  
+
   // Analysis configuration
   defaultAnalysisDepth: number;
   maxAnalysisDepth: number;
@@ -35,7 +35,7 @@ export interface IEnvironmentConfig {
   allowedFileExtensions: string[];
   maxHypothesesPerTournament: number;
   hypothesisConfidenceThreshold: number;
-  
+
   // Circuit breaker configuration
   geminiMaxRetries: number;
   geminiBackoffDelay: number;
@@ -43,7 +43,7 @@ export interface IEnvironmentConfig {
   geminiCircuitBreakerTimeout: number;
   geminiRequestsPerMinute: number;
   geminiBurstLimit: number;
-  
+
   // Logging configuration
   logLevel: string;
   logToConsole: boolean;
@@ -54,7 +54,7 @@ export interface IEnvironmentConfig {
   enableDebugLogging: boolean;
   enablePerformanceLogging: boolean;
   enablePromptLogging: boolean;
-  
+
   // Security configuration
   secureCodeReading: boolean;
   allowedPaths: string[];
@@ -63,7 +63,7 @@ export interface IEnvironmentConfig {
   maxPromptLength: number;
   sessionTimeout: number;
   maxActiveSessions: number;
-  
+
   // Performance monitoring
   healthCheckInterval: number;
   healthCheckTimeout: number;
@@ -71,21 +71,21 @@ export interface IEnvironmentConfig {
   memoryUsageThreshold: number;
   enableMetricsCollection: boolean;
   metricsExportInterval: number;
-  
+
   // Conversational analysis
   conversationSessionTimeout: number;
   maxConversationTurns: number;
   conversationHistoryLimit: number;
   analysisBudgetDefault: number;
   minAnalysisBudget: number;
-  
+
   // Development settings
   enableDevMode: boolean;
   mockGeminiResponses: boolean;
   enableToolValidation: boolean;
   testApiKey: string;
   enableIntegrationTests: boolean;
-  
+
   // Feature flags
   enableCrossSystemAnalysis: boolean;
   enableExecutionTracing: boolean;
@@ -116,7 +116,7 @@ export class EnvironmentValidator {
     mcpServerVersion: '0.1.0',
     requestTimeout: 30000,
     maxConcurrentRequests: 5,
-    
+
     // Gemini AI defaults
     geminiModel: 'gemini-2.5-pro-preview-06-05',
     geminiApiVersion: 'v1beta',
@@ -127,7 +127,7 @@ export class EnvironmentValidator {
     geminiConversationTemperature: 0.3,
     geminiConversationMaxTokens: 4096,
     maxContextSize: 1000000,
-    
+
     // Analysis defaults
     defaultAnalysisDepth: 3,
     maxAnalysisDepth: 5,
@@ -138,7 +138,7 @@ export class EnvironmentValidator {
     allowedFileExtensions: ['.ts', '.js', '.tsx', '.jsx', '.py', '.java', '.c', '.cpp', '.h', '.hpp', '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt'],
     maxHypothesesPerTournament: 10,
     hypothesisConfidenceThreshold: 0.7,
-    
+
     // Circuit breaker defaults
     geminiMaxRetries: 3,
     geminiBackoffDelay: 1000,
@@ -146,7 +146,7 @@ export class EnvironmentValidator {
     geminiCircuitBreakerTimeout: 60000,
     geminiRequestsPerMinute: 60,
     geminiBurstLimit: 10,
-    
+
     // Logging defaults
     logLevel: 'info',
     logToConsole: true,
@@ -157,7 +157,7 @@ export class EnvironmentValidator {
     enableDebugLogging: false,
     enablePerformanceLogging: false,
     enablePromptLogging: false,
-    
+
     // Security defaults
     secureCodeReading: true,
     allowedPaths: ['/home', '/Users', '/workspace', '/project'],
@@ -166,7 +166,7 @@ export class EnvironmentValidator {
     maxPromptLength: 100000,
     sessionTimeout: 3600000, // 1 hour
     maxActiveSessions: 100,
-    
+
     // Performance monitoring defaults
     healthCheckInterval: 30000,
     healthCheckTimeout: 5000,
@@ -174,21 +174,21 @@ export class EnvironmentValidator {
     memoryUsageThreshold: 0.8,
     enableMetricsCollection: true,
     metricsExportInterval: 60000,
-    
+
     // Conversational analysis defaults
     conversationSessionTimeout: 1800000, // 30 minutes
     maxConversationTurns: 50,
     conversationHistoryLimit: 20,
     analysisBudgetDefault: 100,
     minAnalysisBudget: 10,
-    
+
     // Development defaults
     enableDevMode: false,
     mockGeminiResponses: false,
     enableToolValidation: true,
     testApiKey: 'test-key-for-unit-tests',
     enableIntegrationTests: false,
-    
+
     // Feature flag defaults
     enableCrossSystemAnalysis: true,
     enableExecutionTracing: true,
@@ -255,10 +255,10 @@ export class EnvironmentValidator {
   public static getEnvVar<T>(
     key: string,
     defaultValue: T,
-    converter?: (value: string) => T
+    converter?: (value: string) => T,
   ): T {
     const value = process.env[key];
-    
+
     if (value === undefined) {
       return defaultValue;
     }
@@ -276,7 +276,7 @@ export class EnvironmentValidator {
     if (typeof defaultValue === 'boolean') {
       return (value.toLowerCase() === 'true' || value === '1') as unknown as T;
     }
-    
+
     if (typeof defaultValue === 'number') {
       const numValue = Number(value);
       return (isNaN(numValue) ? defaultValue : numValue) as unknown as T;
@@ -292,14 +292,14 @@ export class EnvironmentValidator {
     return {
       // Required configuration
       geminiApiKey: process.env.GEMINI_API_KEY!,
-      
+
       // Server configuration
       nodeEnv: this.getEnvVar('NODE_ENV', this.DEFAULT_CONFIG.nodeEnv!),
       mcpServerName: this.getEnvVar('MCP_SERVER_NAME', this.DEFAULT_CONFIG.mcpServerName!),
       mcpServerVersion: this.getEnvVar('MCP_SERVER_VERSION', this.DEFAULT_CONFIG.mcpServerVersion!),
       requestTimeout: this.getEnvVar('REQUEST_TIMEOUT', this.DEFAULT_CONFIG.requestTimeout!),
       maxConcurrentRequests: this.getEnvVar('MAX_CONCURRENT_REQUESTS', this.DEFAULT_CONFIG.maxConcurrentRequests!),
-      
+
       // Gemini AI configuration
       geminiModel: this.getEnvVar('GEMINI_MODEL', this.DEFAULT_CONFIG.geminiModel!),
       geminiApiVersion: this.getEnvVar('GEMINI_API_VERSION', this.DEFAULT_CONFIG.geminiApiVersion!),
@@ -310,7 +310,7 @@ export class EnvironmentValidator {
       geminiConversationTemperature: this.getEnvVar('GEMINI_CONVERSATION_TEMPERATURE', this.DEFAULT_CONFIG.geminiConversationTemperature!),
       geminiConversationMaxTokens: this.getEnvVar('GEMINI_CONVERSATION_MAX_TOKENS', this.DEFAULT_CONFIG.geminiConversationMaxTokens!),
       maxContextSize: this.getEnvVar('MAX_CONTEXT_SIZE', this.DEFAULT_CONFIG.maxContextSize!),
-      
+
       // Analysis configuration
       defaultAnalysisDepth: this.getEnvVar('DEFAULT_ANALYSIS_DEPTH', this.DEFAULT_CONFIG.defaultAnalysisDepth!),
       maxAnalysisDepth: this.getEnvVar('MAX_ANALYSIS_DEPTH', this.DEFAULT_CONFIG.maxAnalysisDepth!),
@@ -321,7 +321,7 @@ export class EnvironmentValidator {
       allowedFileExtensions: this.getEnvVar('ALLOWED_FILE_EXTENSIONS', this.DEFAULT_CONFIG.allowedFileExtensions!, (value) => value.split(',')),
       maxHypothesesPerTournament: this.getEnvVar('MAX_HYPOTHESES_PER_TOURNAMENT', this.DEFAULT_CONFIG.maxHypothesesPerTournament!),
       hypothesisConfidenceThreshold: this.getEnvVar('HYPOTHESIS_CONFIDENCE_THRESHOLD', this.DEFAULT_CONFIG.hypothesisConfidenceThreshold!),
-      
+
       // Circuit breaker configuration
       geminiMaxRetries: this.getEnvVar('GEMINI_MAX_RETRIES', this.DEFAULT_CONFIG.geminiMaxRetries!),
       geminiBackoffDelay: this.getEnvVar('GEMINI_BACKOFF_DELAY', this.DEFAULT_CONFIG.geminiBackoffDelay!),
@@ -329,7 +329,7 @@ export class EnvironmentValidator {
       geminiCircuitBreakerTimeout: this.getEnvVar('GEMINI_CIRCUIT_BREAKER_TIMEOUT', this.DEFAULT_CONFIG.geminiCircuitBreakerTimeout!),
       geminiRequestsPerMinute: this.getEnvVar('GEMINI_REQUESTS_PER_MINUTE', this.DEFAULT_CONFIG.geminiRequestsPerMinute!),
       geminiBurstLimit: this.getEnvVar('GEMINI_BURST_LIMIT', this.DEFAULT_CONFIG.geminiBurstLimit!),
-      
+
       // Logging configuration
       logLevel: this.getEnvVar('LOG_LEVEL', this.DEFAULT_CONFIG.logLevel!),
       logToConsole: this.getEnvVar('LOG_TO_CONSOLE', this.DEFAULT_CONFIG.logToConsole!),
@@ -340,7 +340,7 @@ export class EnvironmentValidator {
       enableDebugLogging: this.getEnvVar('ENABLE_DEBUG_LOGGING', this.DEFAULT_CONFIG.enableDebugLogging!),
       enablePerformanceLogging: this.getEnvVar('ENABLE_PERFORMANCE_LOGGING', this.DEFAULT_CONFIG.enablePerformanceLogging!),
       enablePromptLogging: this.getEnvVar('ENABLE_PROMPT_LOGGING', this.DEFAULT_CONFIG.enablePromptLogging!),
-      
+
       // Security configuration
       secureCodeReading: this.getEnvVar('SECURE_CODE_READING', this.DEFAULT_CONFIG.secureCodeReading!),
       allowedPaths: this.getEnvVar('ALLOWED_PATHS', this.DEFAULT_CONFIG.allowedPaths!, (value) => value.split(',')),
@@ -349,7 +349,7 @@ export class EnvironmentValidator {
       maxPromptLength: this.getEnvVar('MAX_PROMPT_LENGTH', this.DEFAULT_CONFIG.maxPromptLength!),
       sessionTimeout: this.getEnvVar('SESSION_TIMEOUT', this.DEFAULT_CONFIG.sessionTimeout!),
       maxActiveSessions: this.getEnvVar('MAX_ACTIVE_SESSIONS', this.DEFAULT_CONFIG.maxActiveSessions!),
-      
+
       // Performance monitoring
       healthCheckInterval: this.getEnvVar('HEALTH_CHECK_INTERVAL', this.DEFAULT_CONFIG.healthCheckInterval!),
       healthCheckTimeout: this.getEnvVar('HEALTH_CHECK_TIMEOUT', this.DEFAULT_CONFIG.healthCheckTimeout!),
@@ -357,21 +357,21 @@ export class EnvironmentValidator {
       memoryUsageThreshold: this.getEnvVar('MEMORY_USAGE_THRESHOLD', this.DEFAULT_CONFIG.memoryUsageThreshold!),
       enableMetricsCollection: this.getEnvVar('ENABLE_METRICS_COLLECTION', this.DEFAULT_CONFIG.enableMetricsCollection!),
       metricsExportInterval: this.getEnvVar('METRICS_EXPORT_INTERVAL', this.DEFAULT_CONFIG.metricsExportInterval!),
-      
+
       // Conversational analysis
       conversationSessionTimeout: this.getEnvVar('CONVERSATION_SESSION_TIMEOUT', this.DEFAULT_CONFIG.conversationSessionTimeout!),
       maxConversationTurns: this.getEnvVar('MAX_CONVERSATION_TURNS', this.DEFAULT_CONFIG.maxConversationTurns!),
       conversationHistoryLimit: this.getEnvVar('CONVERSATION_HISTORY_LIMIT', this.DEFAULT_CONFIG.conversationHistoryLimit!),
       analysisBudgetDefault: this.getEnvVar('ANALYSIS_BUDGET_DEFAULT', this.DEFAULT_CONFIG.analysisBudgetDefault!),
       minAnalysisBudget: this.getEnvVar('MIN_ANALYSIS_BUDGET', this.DEFAULT_CONFIG.minAnalysisBudget!),
-      
+
       // Development settings
       enableDevMode: this.getEnvVar('ENABLE_DEV_MODE', this.DEFAULT_CONFIG.enableDevMode!),
       mockGeminiResponses: this.getEnvVar('MOCK_GEMINI_RESPONSES', this.DEFAULT_CONFIG.mockGeminiResponses!),
       enableToolValidation: this.getEnvVar('ENABLE_TOOL_VALIDATION', this.DEFAULT_CONFIG.enableToolValidation!),
       testApiKey: this.getEnvVar('TEST_API_KEY', this.DEFAULT_CONFIG.testApiKey!),
       enableIntegrationTests: this.getEnvVar('ENABLE_INTEGRATION_TESTS', this.DEFAULT_CONFIG.enableIntegrationTests!),
-      
+
       // Feature flags
       enableCrossSystemAnalysis: this.getEnvVar('ENABLE_CROSS_SYSTEM_ANALYSIS', this.DEFAULT_CONFIG.enableCrossSystemAnalysis!),
       enableExecutionTracing: this.getEnvVar('ENABLE_EXECUTION_TRACING', this.DEFAULT_CONFIG.enableExecutionTracing!),
@@ -494,7 +494,7 @@ export class EnvironmentValidator {
    */
   public static getValidatedConfig(): IEnvironmentConfig {
     const result = this.validate();
-    
+
     if (!result.isValid) {
       throw new Error(`Environment validation failed:\n${result.errors.join('\n')}`);
     }
@@ -520,7 +520,7 @@ export class EnvironmentValidator {
     console.log(`  Log Level: ${config.logLevel}`);
     console.log(`  Security Features: ${config.secureCodeReading ? 'Enabled' : 'Disabled'}`);
     console.log(`  Development Mode: ${config.enableDevMode ? 'Enabled' : 'Disabled'}`);
-    
+
     if (config.enableExperimentalFeatures) {
       console.log(`  Experimental Features: ${config.experimentalFeatureFlags.join(', ')}`);
     }

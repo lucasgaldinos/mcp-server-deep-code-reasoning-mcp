@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Naming Conventions CLI Tool
- * 
+ *
  * Scans the project for naming convention violations and provides
  * detailed reports and suggestions for improvement.
  */
@@ -57,7 +57,7 @@ class NamingConventionsCLI {
    */
   private async collectTypeScriptFiles(dirPath: string): Promise<Map<string, string>> {
     const files = new Map<string, string>();
-    
+
     await this.scanDirectory(dirPath, files);
     return files;
   }
@@ -115,7 +115,7 @@ class NamingConventionsCLI {
     ];
 
     const allPatterns = [...defaultIgnorePatterns, ...this.options.ignorePatterns];
-    
+
     return allPatterns.some(pattern => {
       if (pattern.includes('*')) {
         const regex = new RegExp(pattern.replace(/\*/g, '.*'));
@@ -153,10 +153,10 @@ class NamingConventionsCLI {
     console.log(`Total Elements: ${report.summary.totalElements}`);
     console.log(`Violations Found: ${report.summary.totalViolations}`);
     console.log(`Compliance: ${report.summary.compliancePercentage}%`);
-    
+
     const status = report.summary.compliancePercentage >= 95 ? '✅ Excellent' :
-                   report.summary.compliancePercentage >= 80 ? '⚠️  Good' :
-                   report.summary.compliancePercentage >= 60 ? '🔶 Needs Work' : '❌ Poor';
+      report.summary.compliancePercentage >= 80 ? '⚠️  Good' :
+        report.summary.compliancePercentage >= 60 ? '🔶 Needs Work' : '❌ Poor';
     console.log(`Status: ${status}`);
     console.log('');
 
@@ -175,13 +175,13 @@ class NamingConventionsCLI {
 
       console.log(`\n📄 ${fileResult.filePath}`);
       console.log(`   Compliance: ${fileResult.summary.compliancePercentage}%`);
-      
+
       for (const violation of fileResult.violations) {
         violationCount++;
         console.log(`   ${violationCount}. Line ${violation.line}: ${violation.type} "${violation.name}"`);
         console.log(`      Expected: ${violation.expected}`);
         console.log(`      Pattern: ${violation.pattern}`);
-        
+
         if (!this.options.verbose && violationCount >= 20) {
           const remaining = report.summary.totalViolations - violationCount;
           if (remaining > 0) {
@@ -191,7 +191,7 @@ class NamingConventionsCLI {
           break;
         }
       }
-      
+
       if (!this.options.verbose && violationCount >= 20) break;
     }
 
@@ -208,7 +208,7 @@ class NamingConventionsCLI {
     console.log('\n🔧 Quick Fixes');
     console.log('═'.repeat(50));
     console.log('To automatically fix some violations, run:');
-    console.log(`  npx naming-conventions --fix`);
+    console.log('  npx naming-conventions --fix');
     console.log('\nTo see detailed patterns and examples:');
     console.log('  npx naming-conventions --help-patterns');
   }
@@ -225,7 +225,7 @@ class NamingConventionsCLI {
    */
   private displayMarkdownReport(report: IProjectNamingReport): void {
     console.log('# Naming Conventions Report\n');
-    
+
     console.log('## Summary\n');
     console.log(`- **Files Checked:** ${report.summary.filesChecked}`);
     console.log(`- **Total Elements:** ${report.summary.totalElements}`);
@@ -238,20 +238,20 @@ class NamingConventionsCLI {
     }
 
     console.log('## Violations by File\n');
-    
+
     for (const fileResult of report.fileResults) {
       if (fileResult.violations.length === 0) continue;
 
       console.log(`### \`${fileResult.filePath}\`\n`);
       console.log(`**Compliance:** ${fileResult.summary.compliancePercentage}%\n`);
-      
+
       console.log('| Line | Type | Name | Expected | Pattern |');
       console.log('|------|------|------|----------|---------|');
-      
+
       for (const violation of fileResult.violations) {
         console.log(`| ${violation.line} | ${violation.type} | \`${violation.name}\` | \`${violation.expected}\` | \`${violation.pattern}\` |`);
       }
-      
+
       console.log('');
     }
 
@@ -270,43 +270,43 @@ class NamingConventionsCLI {
   static displayPatternHelp(): void {
     console.log('📚 Naming Convention Patterns\n');
     console.log('═'.repeat(50));
-    
+
     const examples = [
       {
         category: 'Variables & Functions',
         pattern: 'camelCase',
         examples: ['userName', 'getCurrentUser', 'apiKey', 'isValid'],
-        description: 'Start with lowercase, capitalize subsequent words'
+        description: 'Start with lowercase, capitalize subsequent words',
       },
       {
         category: 'Classes & Types',
         pattern: 'PascalCase',
         examples: ['GeminiService', 'UserManager', 'ApiResponse', 'EventType'],
-        description: 'Start with uppercase, capitalize subsequent words'
+        description: 'Start with uppercase, capitalize subsequent words',
       },
       {
         category: 'Interfaces',
         pattern: 'IPascalCase',
         examples: ['IUserService', 'IApiResponse', 'IConfigOptions'],
-        description: 'PascalCase with "I" prefix'
+        description: 'PascalCase with "I" prefix',
       },
       {
         category: 'Constants',
         pattern: 'SCREAMING_SNAKE_CASE',
         examples: ['API_KEY', 'MAX_RETRIES', 'DEFAULT_TIMEOUT'],
-        description: 'All uppercase with underscores'
+        description: 'All uppercase with underscores',
       },
       {
         category: 'API Parameters (MCP)',
         pattern: 'snake_case',
         examples: ['claude_context', 'session_id', 'analysis_type'],
-        description: 'All lowercase with underscores'
+        description: 'All lowercase with underscores',
       },
       {
         category: 'Event Types',
         pattern: 'kebab-case',
         examples: ['user-login', 'analysis-complete', 'error-occurred'],
-        description: 'All lowercase with hyphens'
+        description: 'All lowercase with hyphens',
       },
     ];
 
@@ -340,19 +340,20 @@ function parseArguments(): ICLIOptions {
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    
+
     switch (arg) {
       case '--path':
       case '-p':
         options.projectPath = args[++i] || process.cwd();
         break;
       case '--format':
-      case '-f':
+      case '-f': {
         const format = args[++i];
         if (['console', 'json', 'markdown'].includes(format)) {
           options.outputFormat = format as 'console' | 'json' | 'markdown';
         }
         break;
+      }
       case '--fix':
         options.fix = true;
         break;

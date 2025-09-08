@@ -1,3 +1,9 @@
+/**
+ * @file This file contains the DeepCodeReasoner class, which is responsible for performing deep code analysis.
+ * @author Your Name
+ * @version 1.0.0
+ * @license MIT
+ */
 import type {
   ClaudeCodeContext,
   DeepAnalysisResult,
@@ -16,13 +22,20 @@ import { SystemBoundaryAnalyzer } from './SystemBoundaryAnalyzer.js';
 import { PerformanceModeler } from './PerformanceModeler.js';
 import { HypothesisTester } from './HypothesisTester.js';
 
-// Local type definitions
+/**
+ * Represents an execution graph.
+ * @interface
+ */
 interface ExecutionGraph {
   nodes: Map<string, ExecutionNode>;
   edges: Array<{ from: string; to: string; condition?: string }>;
   entryPoint: string;
 }
 
+/**
+ * Represents a node in an execution graph.
+ * @interface
+ */
 interface ExecutionNode {
   id: string;
   location: CodeLocation;
@@ -31,12 +44,20 @@ interface ExecutionNode {
   children: ExecutionNode[];
 }
 
+/**
+ * Represents a report of the impact of a change.
+ * @interface
+ */
 interface ImpactReport {
   breakingChanges: BreakingChange[];
   performanceImplications: PerformanceIssue[];
   systemImpacts: SystemImpact[];
 }
 
+/**
+ * Represents a breaking change.
+ * @interface
+ */
 interface BreakingChange {
   service: string;
   description: string;
@@ -46,12 +67,19 @@ interface BreakingChange {
   file?: string;
 }
 
+/**
+ * The DeepCodeReasoner class is responsible for performing deep code analysis.
+ * @class
+ */
 export class DeepCodeReasoner {
   private executionTracer: ExecutionTracer;
   private systemAnalyzer: SystemBoundaryAnalyzer;
   private performanceModeler: PerformanceModeler;
   private hypothesisTester: HypothesisTester;
 
+  /**
+   * Creates an instance of DeepCodeReasoner.
+   */
   constructor() {
     this.executionTracer = new ExecutionTracer();
     this.systemAnalyzer = new SystemBoundaryAnalyzer();
@@ -59,6 +87,13 @@ export class DeepCodeReasoner {
     this.hypothesisTester = new HypothesisTester();
   }
 
+  /**
+   * Escalates analysis from Claude Code to Gemini.
+   * @param {ClaudeCodeContext} context - The context from Claude Code.
+   * @param {string} analysisType - The type of analysis to perform.
+   * @param {number} depthLevel - The depth of the analysis.
+   * @returns {Promise<DeepAnalysisResult>} The result of the analysis.
+   */
   async escalateFromClaudeCode(
     context: ClaudeCodeContext,
     analysisType: string,
@@ -108,6 +143,12 @@ export class DeepCodeReasoner {
     }
   }
 
+  /**
+   * Parses the attempts made by Claude Code.
+   * @param {string[]} approaches - The approaches taken by Claude Code.
+   * @returns {string[]} The parsed attempts.
+   * @private
+   */
   private parseClaudeAttempts(approaches: string[]): string[] {
     return approaches.map(approach => {
       // Extract key insights from each attempt
@@ -116,6 +157,12 @@ export class DeepCodeReasoner {
     });
   }
 
+  /**
+   * Extracts key actions from an approach string.
+   * @param {string} approach - The approach string.
+   * @returns {string[]} The key actions.
+   * @private
+   */
   private extractKeyActions(approach: string): string[] {
     const actionPatterns = [
       /profile[d]?\s+(\w+)/gi,
@@ -134,6 +181,12 @@ export class DeepCodeReasoner {
     return actions.length > 0 ? actions : [approach];
   }
 
+  /**
+   * Classifies the reasoning gap based on the stuck points.
+   * @param {string[]} stuckPoints - The points where Claude Code got stuck.
+   * @returns {string} The type of reasoning gap.
+   * @private
+   */
   private classifyReasoningGap(stuckPoints: string[]): string {
     const gapIndicators = {
       execution_flow: ['execution', 'flow', 'trace', 'call', 'sequence'],
@@ -161,6 +214,14 @@ export class DeepCodeReasoner {
     return Object.entries(scores).reduce((a, b) => (a[1] > b[1] ? a : b))[0] || 'ambiguous';
   }
 
+  /**
+   * Performs execution analysis.
+   * @param {ClaudeCodeContext} context - The context from Claude Code.
+   * @param {number} depthLevel - The depth of the analysis.
+   * @param {number} _timeoutMs - The timeout for the analysis.
+   * @returns {Promise<DeepAnalysisResult>} The result of the analysis.
+   * @private
+   */
   private async performExecutionAnalysis(
     context: ClaudeCodeContext,
     depthLevel: number,
@@ -214,6 +275,14 @@ export class DeepCodeReasoner {
     };
   }
 
+  /**
+   * Performs cross-system analysis.
+   * @param {ClaudeCodeContext} context - The context from Claude Code.
+   * @param {number} _depthLevel - The depth of the analysis.
+   * @param {number} _timeoutMs - The timeout for the analysis.
+   * @returns {Promise<DeepAnalysisResult>} The result of the analysis.
+   * @private
+   */
   private async performCrossSystemAnalysis(
     context: ClaudeCodeContext,
     _depthLevel: number,
@@ -258,6 +327,14 @@ export class DeepCodeReasoner {
     };
   }
 
+  /**
+   * Performs performance analysis.
+   * @param {ClaudeCodeContext} context - The context from Claude Code.
+   * @param {number} depthLevel - The depth of the analysis.
+   * @param {number} _timeoutMs - The timeout for the analysis.
+   * @returns {Promise<DeepAnalysisResult>} The result of the analysis.
+   * @private
+   */
   private async performPerformanceAnalysis(
     context: ClaudeCodeContext,
     depthLevel: number,
@@ -311,6 +388,14 @@ export class DeepCodeReasoner {
     };
   }
 
+  /**
+   * Performs hypothesis analysis.
+   * @param {ClaudeCodeContext} context - The context from Claude Code.
+   * @param {number} _depthLevel - The depth of the analysis.
+   * @param {number} _timeoutMs - The timeout for the analysis.
+   * @returns {Promise<DeepAnalysisResult>} The result of the analysis.
+   * @private
+   */
   private async performHypothesisAnalysis(
     context: ClaudeCodeContext,
     _depthLevel: number,
@@ -368,6 +453,15 @@ export class DeepCodeReasoner {
     };
   }
 
+  /**
+   * Performs general analysis.
+   * @param {ClaudeCodeContext} context - The context from Claude Code.
+   * @param {string} gapType - The type of reasoning gap.
+   * @param {number} depthLevel - The depth of the analysis.
+   * @param {number} timeoutMs - The timeout for the analysis.
+   * @returns {Promise<DeepAnalysisResult>} The result of the analysis.
+   * @private
+   */
   private async performGeneralAnalysis(
     context: ClaudeCodeContext,
     gapType: string,
@@ -387,6 +481,12 @@ export class DeepCodeReasoner {
     }
   }
 
+  /**
+   * Analyzes execution patterns.
+   * @param {ExecutionGraph} _graph - The execution graph.
+   * @returns {{ paths: ExecutionPath[]; issues: Array<{ description: string; locations: CodeLocation[]; confidence: number; suggestion: string; }> }} The analysis result.
+   * @private
+   */
   private analyzeExecutionPatterns(_graph: ExecutionGraph): {
     paths: ExecutionPath[];
     issues: Array<{
@@ -403,6 +503,12 @@ export class DeepCodeReasoner {
     };
   }
 
+  /**
+   * Generates execution actions.
+   * @param {RootCause[]} rootCauses - The root causes.
+   * @returns {Action[]} The generated actions.
+   * @private
+   */
   private generateExecutionActions(rootCauses: RootCause[]): Action[] {
     return rootCauses.map(cause => ({
       type: 'fix',
@@ -412,6 +518,12 @@ export class DeepCodeReasoner {
     }));
   }
 
+  /**
+   * Generates next steps for execution analysis.
+   * @param {ExecutionPath[]} _paths - The execution paths.
+   * @returns {string[]} The next steps.
+   * @private
+   */
   private generateExecutionNextSteps(_paths: ExecutionPath[]): string[] {
     return [
       'Review identified execution paths for optimization opportunities',
@@ -420,6 +532,12 @@ export class DeepCodeReasoner {
     ];
   }
 
+  /**
+   * Generates code changes for execution analysis.
+   * @param {RootCause[]} rootCauses - The root causes.
+   * @returns {CodeChange[]} The generated code changes.
+   * @private
+   */
   private generateExecutionCodeChanges(rootCauses: RootCause[]): CodeChange[] {
     return rootCauses.map(cause => ({
       file: cause.evidence[0]?.file || 'unknown',
@@ -428,6 +546,12 @@ export class DeepCodeReasoner {
     }));
   }
 
+  /**
+   * Extracts insights from execution analysis.
+   * @param {ExecutionPath[]} paths - The execution paths.
+   * @returns {Insight[]} The extracted insights.
+   * @private
+   */
   private extractExecutionInsights(paths: ExecutionPath[]): Insight[] {
     return [
       {
@@ -438,6 +562,12 @@ export class DeepCodeReasoner {
     ];
   }
 
+  /**
+   * Generates actions for cross-system analysis.
+   * @param {ImpactReport} impacts - The impact report.
+   * @returns {Action[]} The generated actions.
+   * @private
+   */
   private generateCrossSystemActions(impacts: ImpactReport): Action[] {
     const actions: Action[] = [];
 
@@ -453,6 +583,12 @@ export class DeepCodeReasoner {
     return actions;
   }
 
+  /**
+   * Generates next steps for cross-system analysis.
+   * @param {ImpactReport} _impacts - The impact report.
+   * @returns {string[]} The next steps.
+   * @private
+   */
   private generateCrossSystemNextSteps(_impacts: ImpactReport): string[] {
     return [
       'Update API documentation for changed endpoints',
@@ -461,6 +597,12 @@ export class DeepCodeReasoner {
     ];
   }
 
+  /**
+   * Generates code changes for cross-system analysis.
+   * @param {ImpactReport} impacts - The impact report.
+   * @returns {CodeChange[]} The generated code changes.
+   * @private
+   */
   private generateCrossSystemCodeChanges(impacts: ImpactReport): CodeChange[] {
     return impacts.breakingChanges.map((change) => ({
       file: change.file || 'unknown',
@@ -469,6 +611,12 @@ export class DeepCodeReasoner {
     }));
   }
 
+  /**
+   * Extracts insights from cross-system analysis.
+   * @param {ImpactReport} impacts - The impact report.
+   * @returns {Insight[]} The extracted insights.
+   * @private
+   */
   private extractCrossSystemInsights(impacts: ImpactReport): Insight[] {
     return [
       {
@@ -479,6 +627,12 @@ export class DeepCodeReasoner {
     ];
   }
 
+  /**
+   * Generates actions for performance analysis.
+   * @param {PerformanceIssue[]} issues - The performance issues.
+   * @returns {Action[]} The generated actions.
+   * @private
+   */
   private generatePerformanceActions(issues: PerformanceIssue[]): Action[] {
     return issues
       .filter(issue => issue.impact.estimatedLatency > 100)
@@ -490,6 +644,12 @@ export class DeepCodeReasoner {
       }));
   }
 
+  /**
+   * Generates next steps for performance analysis.
+   * @param {PerformanceIssue[]} _issues - The performance issues.
+   * @returns {string[]} The next steps.
+   * @private
+   */
   private generatePerformanceNextSteps(_issues: PerformanceIssue[]): string[] {
     return [
       'Profile application under realistic load',
@@ -498,6 +658,12 @@ export class DeepCodeReasoner {
     ];
   }
 
+  /**
+   * Generates code changes for performance analysis.
+   * @param {PerformanceIssue[]} issues - The performance issues.
+   * @returns {CodeChange[]} The generated code changes.
+   * @private
+   */
   private generatePerformanceCodeChanges(issues: PerformanceIssue[]): CodeChange[] {
     return issues.map(issue => ({
       file: issue.location.file,
@@ -506,6 +672,12 @@ export class DeepCodeReasoner {
     }));
   }
 
+  /**
+   * Extracts insights from performance analysis.
+   * @param {PerformanceIssue[]} issues - The performance issues.
+   * @returns {Insight[]} The extracted insights.
+   * @private
+   */
   private extractPerformanceInsights(issues: PerformanceIssue[]): Insight[] {
     const totalLatency = issues.reduce((sum, issue) => sum + issue.impact.estimatedLatency, 0);
 
@@ -518,6 +690,12 @@ export class DeepCodeReasoner {
     ];
   }
 
+  /**
+   * Generates hypotheses based on the context.
+   * @param {ClaudeCodeContext} context - The context from Claude Code.
+   * @returns {Hypothesis[]} The generated hypotheses.
+   * @private
+   */
   private generateHypotheses(context: ClaudeCodeContext): Hypothesis[] {
     const hypotheses: Hypothesis[] = [];
 
@@ -547,6 +725,12 @@ export class DeepCodeReasoner {
     return hypotheses;
   }
 
+  /**
+   * Generates actions for hypothesis analysis.
+   * @param {Hypothesis[]} validated - The validated hypotheses.
+   * @returns {Action[]} The generated actions.
+   * @private
+   */
   private generateHypothesisActions(validated: Hypothesis[]): Action[] {
     return validated.map(hyp => ({
       type: 'fix',
@@ -556,6 +740,13 @@ export class DeepCodeReasoner {
     }));
   }
 
+  /**
+   * Generates next steps for hypothesis analysis.
+   * @param {Hypothesis[]} all - All hypotheses.
+   * @param {Hypothesis[]} validated - The validated hypotheses.
+   * @returns {string[]} The next steps.
+   * @private
+   */
   private generateHypothesisNextSteps(all: Hypothesis[], validated: Hypothesis[]): string[] {
     const invalidated = all.filter(h => !validated.find(v => v.id === h.id));
 
@@ -565,6 +756,12 @@ export class DeepCodeReasoner {
     ];
   }
 
+  /**
+   * Generates code changes for hypothesis analysis.
+   * @param {Hypothesis[]} validated - The validated hypotheses.
+   * @returns {CodeChange[]} The generated code changes.
+   * @private
+   */
   private generateHypothesisCodeChanges(validated: Hypothesis[]): CodeChange[] {
     return validated.map(hyp => ({
       file: hyp.evidence[0] || 'unknown',
@@ -573,6 +770,12 @@ export class DeepCodeReasoner {
     }));
   }
 
+  /**
+   * Extracts insights from hypothesis analysis.
+   * @param {Hypothesis[]} validated - The validated hypotheses.
+   * @returns {Insight[]} The extracted insights.
+   * @private
+   */
   private extractHypothesisInsights(validated: Hypothesis[]): Insight[] {
     return validated.map(hyp => ({
       type: 'validated_hypothesis',
@@ -581,6 +784,13 @@ export class DeepCodeReasoner {
     }));
   }
 
+  /**
+   * Creates an error result.
+   * @param {Error} error - The error.
+   * @param {ClaudeCodeContext} context - The context from Claude Code.
+   * @returns {DeepAnalysisResult} The error result.
+   * @private
+   */
   private createErrorResult(error: Error, context: ClaudeCodeContext): DeepAnalysisResult {
     return {
       status: 'partial',

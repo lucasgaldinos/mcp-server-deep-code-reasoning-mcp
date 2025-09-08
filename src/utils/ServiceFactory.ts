@@ -1,10 +1,10 @@
 /**
  * Factory Pattern Implementation for Deep Code Reasoning MCP Server
- * 
+ *
  * This module provides a comprehensive factory pattern implementation for creating
  * and managing service instances with dependency injection, configuration management,
  * lifecycle control, and advanced features like caching and lazy loading.
- * 
+ *
  * @author Deep Code Reasoning MCP Team
  * @version 1.0.0
  * @since 2024
@@ -14,7 +14,7 @@ import { Logger } from './Logger.js';
 
 /**
  * Service registration information for the factory
- * 
+ *
  * @example
  * ```typescript
  * const registration: ServiceRegistration<UserService> = {
@@ -23,7 +23,7 @@ import { Logger } from './Logger.js';
  *   singleton: true
  * };
  * ```
- * 
+ *
  * @since 1.0.0
  */
 export interface ServiceRegistration<T = any> {
@@ -48,7 +48,7 @@ export interface ServiceRegistration<T = any> {
 
 /**
  * Service container configuration options
- * 
+ *
  * @example
  * ```typescript
  * const config: ContainerConfig = {
@@ -57,7 +57,7 @@ export interface ServiceRegistration<T = any> {
  *   strictDependencies: true
  * };
  * ```
- * 
+ *
  * @since 1.0.0
  */
 export interface ContainerConfig {
@@ -77,7 +77,7 @@ export interface ContainerConfig {
 
 /**
  * Service creation context for factory functions
- * 
+ *
  * @example
  * ```typescript
  * const context: ServiceContext = {
@@ -87,7 +87,7 @@ export interface ContainerConfig {
  *   container: serviceContainer
  * };
  * ```
- * 
+ *
  * @since 1.0.0
  */
 export interface ServiceContext {
@@ -107,7 +107,7 @@ export interface ServiceContext {
 
 /**
  * Service factory error types for detailed error handling
- * 
+ *
  * @example
  * ```typescript
  * try {
@@ -118,23 +118,23 @@ export interface ServiceContext {
  *   }
  * }
  * ```
- * 
+ *
  * @since 1.0.0
  */
 export class ServiceFactoryError extends Error {
   /**
    * Creates a new service factory error
-   * 
+   *
    * @param message - Error message
    * @param serviceName - Name of the service that failed
    * @param cause - Underlying cause of the error
-   * 
+   *
    * @since 1.0.0
    */
   constructor(
     message: string,
     public readonly serviceName: string,
-    public readonly cause?: Error
+    public readonly cause?: Error,
   ) {
     super(message);
     this.name = 'ServiceFactoryError';
@@ -143,7 +143,7 @@ export class ServiceFactoryError extends Error {
 
 /**
  * Circular dependency error for dependency cycle detection
- * 
+ *
  * @example
  * ```typescript
  * try {
@@ -154,21 +154,21 @@ export class ServiceFactoryError extends Error {
  *   }
  * }
  * ```
- * 
+ *
  * @since 1.0.0
  */
 export class CircularDependencyError extends ServiceFactoryError {
   /**
    * Creates a new circular dependency error
-   * 
+   *
    * @param dependencyChain - Chain of dependencies that form the cycle
-   * 
+   *
    * @since 1.0.0
    */
   constructor(public readonly dependencyChain: string[]) {
     super(
       `Circular dependency detected: ${dependencyChain.join(' -> ')}`,
-      dependencyChain[0]
+      dependencyChain[0],
     );
     this.name = 'CircularDependencyError';
   }
@@ -176,7 +176,7 @@ export class CircularDependencyError extends ServiceFactoryError {
 
 /**
  * Comprehensive service container with dependency injection and lifecycle management
- * 
+ *
  * This implementation provides advanced features including:
  * - Dependency injection with circular dependency detection
  * - Singleton and transient service lifecycles
@@ -185,32 +185,32 @@ export class CircularDependencyError extends ServiceFactoryError {
  * - Configuration management
  * - Lifecycle hooks (onInit, onDestroy)
  * - Performance monitoring and logging
- * 
+ *
  * @example
  * ```typescript
  * const container = new ServiceContainer({
  *   enableLogging: true,
  *   enableCaching: true
  * });
- * 
+ *
  * // Register services
  * container.register('database', {
  *   factory: () => new DatabaseService(),
  *   singleton: true,
  *   tags: ['persistence']
  * });
- * 
+ *
  * container.register('userService', {
  *   factory: (deps) => new UserService(deps.database),
  *   dependencies: ['database'],
  *   singleton: true,
  *   tags: ['business-logic']
  * });
- * 
+ *
  * // Use services
  * const userService = await container.get('userService');
  * ```
- * 
+ *
  * @since 1.0.0
  */
 export class ServiceContainer {
@@ -222,9 +222,9 @@ export class ServiceContainer {
 
   /**
    * Creates a new service container
-   * 
+   *
    * @param config - Container configuration options
-   * 
+   *
    * @example
    * ```typescript
    * const container = new ServiceContainer({
@@ -233,13 +233,13 @@ export class ServiceContainer {
    *   maxDependencyDepth: 10
    * });
    * ```
-   * 
+   *
    * @since 1.0.0
    */
   constructor(private config: ContainerConfig = {}) {
     this.logger = new Logger('ServiceContainer');
     this.applyDefaultConfig();
-    
+
     if (this.config.enableLogging) {
       this.logger.info('Service container initialized', { config: this.config });
     }
@@ -247,11 +247,11 @@ export class ServiceContainer {
 
   /**
    * Registers a service with the container
-   * 
+   *
    * @param name - Unique service name
    * @param registration - Service registration configuration
    * @returns This container for method chaining
-   * 
+   *
    * @example
    * ```typescript
    * container
@@ -264,7 +264,7 @@ export class ServiceContainer {
    *     dependencies: ['database']
    *   });
    * ```
-   * 
+   *
    * @throws {ServiceFactoryError} When service is already registered
    * @since 1.0.0
    */
@@ -286,7 +286,7 @@ export class ServiceContainer {
       dependencies: [],
       priority: 0,
       tags: [],
-      ...registration
+      ...registration,
     };
 
     this.registrations.set(name, normalizedRegistration);
@@ -295,7 +295,7 @@ export class ServiceContainer {
       this.logger.info(`Service '${name}' registered`, {
         singleton: normalizedRegistration.singleton,
         dependencies: normalizedRegistration.dependencies,
-        tags: normalizedRegistration.tags
+        tags: normalizedRegistration.tags,
       });
     }
 
@@ -304,17 +304,17 @@ export class ServiceContainer {
 
   /**
    * Retrieves a service instance from the container
-   * 
+   *
    * @param name - Service name to retrieve
    * @param context - Optional creation context
    * @returns Promise resolving to service instance
-   * 
+   *
    * @example
    * ```typescript
    * const userService = await container.get<UserService>('userService');
    * const database = await container.get('database');
    * ```
-   * 
+   *
    * @throws {ServiceFactoryError} When service is not registered
    * @throws {CircularDependencyError} When circular dependency is detected
    * @since 1.0.0
@@ -350,17 +350,17 @@ export class ServiceContainer {
 
   /**
    * Checks if a service is registered
-   * 
+   *
    * @param name - Service name to check
    * @returns Whether the service is registered
-   * 
+   *
    * @example
    * ```typescript
    * if (container.has('userService')) {
    *   const service = await container.get('userService');
    * }
    * ```
-   * 
+   *
    * @since 1.0.0
    */
   has(name: string): boolean {
@@ -369,15 +369,15 @@ export class ServiceContainer {
 
   /**
    * Removes a service registration and destroys instances
-   * 
+   *
    * @param name - Service name to unregister
    * @returns Whether the service was unregistered
-   * 
+   *
    * @example
    * ```typescript
    * const removed = await container.unregister('oldService');
    * ```
-   * 
+   *
    * @since 1.0.0
    */
   async unregister(name: string): Promise<boolean> {
@@ -401,17 +401,17 @@ export class ServiceContainer {
 
   /**
    * Lists all registered service names
-   * 
+   *
    * @param filter - Optional filter criteria
    * @returns Array of service names
-   * 
+   *
    * @example
    * ```typescript
    * const allServices = container.list();
    * const businessServices = container.list({ tags: ['business-logic'] });
    * const singletons = container.list({ singleton: true });
    * ```
-   * 
+   *
    * @since 1.0.0
    */
   list(filter?: {
@@ -449,10 +449,10 @@ export class ServiceContainer {
 
   /**
    * Gets service registration information
-   * 
+   *
    * @param name - Service name
    * @returns Service registration or undefined
-   * 
+   *
    * @example
    * ```typescript
    * const registration = container.getRegistration('userService');
@@ -460,7 +460,7 @@ export class ServiceContainer {
    *   console.log('Dependencies:', registration.dependencies);
    * }
    * ```
-   * 
+   *
    * @since 1.0.0
    */
   getRegistration(name: string): ServiceRegistration | undefined {
@@ -469,14 +469,14 @@ export class ServiceContainer {
 
   /**
    * Destroys all services and clears the container
-   * 
+   *
    * @returns Promise resolving when all services are destroyed
-   * 
+   *
    * @example
    * ```typescript
    * await container.destroy();
    * ```
-   * 
+   *
    * @since 1.0.0
    */
   async destroy(): Promise<void> {
@@ -492,7 +492,7 @@ export class ServiceContainer {
     const destroyPromises = Array.from(this.instances.keys()).map(name =>
       this.destroyService(name).catch(error => {
         this.logger.error(`Error destroying service '${name}':`, error);
-      })
+      }),
     );
 
     await Promise.all(destroyPromises);
@@ -509,15 +509,15 @@ export class ServiceContainer {
 
   /**
    * Gets container statistics and health information
-   * 
+   *
    * @returns Container statistics
-   * 
+   *
    * @example
    * ```typescript
    * const stats = container.getStats();
    * console.log(`${stats.instanceCount} instances of ${stats.registrationCount} services`);
    * ```
-   * 
+   *
    * @since 1.0.0
    */
   getStats(): {
@@ -526,31 +526,31 @@ export class ServiceContainer {
     singletonCount: number;
     creating: string[];
     destroyed: boolean;
-  } {
+    } {
     return {
       registrationCount: this.registrations.size,
       instanceCount: this.instances.size,
       singletonCount: Array.from(this.registrations.values()).filter(r => r.singleton).length,
       creating: Array.from(this.creating),
-      destroyed: this.destroyed
+      destroyed: this.destroyed,
     };
   }
 
   /**
    * Creates a service instance with dependency resolution
-   * 
+   *
    * @param name - Service name
    * @param registration - Service registration
    * @param context - Creation context
    * @returns Promise resolving to service instance
-   * 
+   *
    * @private
    * @since 1.0.0
    */
   private async createService<T>(
     name: string,
     registration: ServiceRegistration<T>,
-    context?: Partial<ServiceContext>
+    context?: Partial<ServiceContext>,
   ): Promise<T> {
     this.creating.add(name);
 
@@ -568,7 +568,7 @@ export class ServiceContainer {
         container: this,
         createdAt: new Date(),
         attempt: 1,
-        ...context
+        ...context,
       };
 
       // Create instance with timeout
@@ -576,7 +576,7 @@ export class ServiceContainer {
         name,
         registration.factory,
         dependencies,
-        registration.config
+        registration.config,
       );
 
       // Execute onInit lifecycle hook
@@ -595,7 +595,7 @@ export class ServiceContainer {
         this.logger.info(`Service '${name}' created`, {
           duration: `${duration}ms`,
           singleton: registration.singleton,
-          dependencies: registration.dependencies
+          dependencies: registration.dependencies,
         });
       }
 
@@ -604,10 +604,10 @@ export class ServiceContainer {
       const factoryError = error instanceof ServiceFactoryError
         ? error
         : new ServiceFactoryError(
-            `Failed to create service '${name}': ${error instanceof Error ? error.message : 'Unknown error'}`,
-            name,
-            error instanceof Error ? error : undefined
-          );
+          `Failed to create service '${name}': ${error instanceof Error ? error.message : 'Unknown error'}`,
+          name,
+          error instanceof Error ? error : undefined,
+        );
 
       if (this.config.enableLogging) {
         this.logger.error(`Service creation failed for '${name}':`, factoryError);
@@ -621,10 +621,10 @@ export class ServiceContainer {
 
   /**
    * Resolves all dependencies for a service
-   * 
+   *
    * @param dependencyNames - Names of dependencies to resolve
    * @returns Promise resolving to dependency map
-   * 
+   *
    * @private
    * @since 1.0.0
    */
@@ -642,13 +642,13 @@ export class ServiceContainer {
 
   /**
    * Creates service with timeout protection
-   * 
+   *
    * @param name - Service name
    * @param factory - Factory function
    * @param dependencies - Resolved dependencies
    * @param config - Service configuration
    * @returns Promise resolving to service instance
-   * 
+   *
    * @private
    * @since 1.0.0
    */
@@ -656,7 +656,7 @@ export class ServiceContainer {
     name: string,
     factory: (deps: Record<string, any>, config?: any) => T | Promise<T>,
     dependencies: Record<string, any>,
-    config?: any
+    config?: any,
   ): Promise<T> {
     const timeout = this.config.creationTimeout || 30000; // 30 seconds default
 
@@ -666,18 +666,18 @@ export class ServiceContainer {
         setTimeout(() => {
           reject(new ServiceFactoryError(
             `Service creation timeout after ${timeout}ms`,
-            name
+            name,
           ));
         }, timeout);
-      })
+      }),
     ]);
   }
 
   /**
    * Destroys a service instance
-   * 
+   *
    * @param name - Service name to destroy
-   * 
+   *
    * @private
    * @since 1.0.0
    */
@@ -705,10 +705,10 @@ export class ServiceContainer {
 
   /**
    * Validates service registration
-   * 
+   *
    * @param name - Service name
    * @param registration - Registration to validate
-   * 
+   *
    * @private
    * @since 1.0.0
    */
@@ -728,7 +728,7 @@ export class ServiceContainer {
 
   /**
    * Applies default configuration values
-   * 
+   *
    * @private
    * @since 1.0.0
    */
@@ -740,47 +740,47 @@ export class ServiceContainer {
       maxDependencyDepth: 50,
       creationTimeout: 30000,
       environment: 'production',
-      ...this.config
+      ...this.config,
     };
   }
 }
 
 /**
  * Global service container instance for application-wide service management
- * 
+ *
  * @example
  * ```typescript
  * import { globalContainer } from './ServiceFactory';
- * 
+ *
  * globalContainer.register('config', {
  *   factory: () => new ConfigService(),
  *   singleton: true
  * });
- * 
+ *
  * const config = await globalContainer.get('config');
  * ```
- * 
+ *
  * @since 1.0.0
  */
 export const globalContainer = new ServiceContainer({
   enableLogging: process.env.NODE_ENV === 'development',
   enableCaching: true,
-  strictDependencies: true
+  strictDependencies: true,
 });
 
 /**
  * Convenient factory functions for common service patterns
- * 
+ *
  * @since 1.0.0
  */
 export class ServiceFactory {
   /**
    * Creates a singleton service registration
-   * 
+   *
    * @param factory - Factory function
    * @param options - Additional registration options
    * @returns Service registration
-   * 
+   *
    * @example
    * ```typescript
    * container.register('database', ServiceFactory.singleton(
@@ -788,27 +788,27 @@ export class ServiceFactory {
    *   { tags: ['persistence'] }
    * ));
    * ```
-   * 
+   *
    * @since 1.0.0
    */
   static singleton<T>(
     factory: (dependencies: Record<string, any>, config?: any) => T | Promise<T>,
-    options: Omit<ServiceRegistration<T>, 'factory' | 'singleton'> = {}
+    options: Omit<ServiceRegistration<T>, 'factory' | 'singleton'> = {},
   ): ServiceRegistration<T> {
     return {
       factory,
       singleton: true,
-      ...options
+      ...options,
     };
   }
 
   /**
    * Creates a transient service registration
-   * 
+   *
    * @param factory - Factory function
    * @param options - Additional registration options
    * @returns Service registration
-   * 
+   *
    * @example
    * ```typescript
    * container.register('request', ServiceFactory.transient(
@@ -816,53 +816,53 @@ export class ServiceFactory {
    *   { dependencies: ['httpClient'] }
    * ));
    * ```
-   * 
+   *
    * @since 1.0.0
    */
   static transient<T>(
     factory: (dependencies: Record<string, any>, config?: any) => T | Promise<T>,
-    options: Omit<ServiceRegistration<T>, 'factory' | 'singleton'> = {}
+    options: Omit<ServiceRegistration<T>, 'factory' | 'singleton'> = {},
   ): ServiceRegistration<T> {
     return {
       factory,
       singleton: false,
-      ...options
+      ...options,
     };
   }
 
   /**
    * Creates a value-based service registration
-   * 
+   *
    * @param value - Value to register
    * @param options - Additional registration options
    * @returns Service registration
-   * 
+   *
    * @example
    * ```typescript
    * container.register('apiUrl', ServiceFactory.value('https://api.example.com'));
    * container.register('config', ServiceFactory.value(configObject));
    * ```
-   * 
+   *
    * @since 1.0.0
    */
   static value<T>(
     value: T,
-    options: Omit<ServiceRegistration<T>, 'factory' | 'singleton'> = {}
+    options: Omit<ServiceRegistration<T>, 'factory' | 'singleton'> = {},
   ): ServiceRegistration<T> {
     return {
       factory: () => value,
       singleton: true,
-      ...options
+      ...options,
     };
   }
 
   /**
    * Creates a lazy service registration that's created on first access
-   * 
+   *
    * @param factory - Factory function
    * @param options - Additional registration options
    * @returns Service registration
-   * 
+   *
    * @example
    * ```typescript
    * container.register('heavyService', ServiceFactory.lazy(
@@ -870,17 +870,17 @@ export class ServiceFactory {
    *   { singleton: true }
    * ));
    * ```
-   * 
+   *
    * @since 1.0.0
    */
   static lazy<T>(
     factory: () => T | Promise<T>,
-    options: Omit<ServiceRegistration<T>, 'factory'> = {}
+    options: Omit<ServiceRegistration<T>, 'factory'> = {},
   ): ServiceRegistration<T> {
     return {
       factory: () => factory(),
       singleton: true,
-      ...options
+      ...options,
     };
   }
 }

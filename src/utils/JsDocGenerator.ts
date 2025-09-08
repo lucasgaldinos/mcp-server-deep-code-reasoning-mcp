@@ -1,10 +1,10 @@
 /**
  * JSDoc Documentation Generator and Validator for Deep Code Reasoning MCP Server
- * 
+ *
  * This module provides comprehensive JSDoc documentation generation, validation,
  * and enforcement for consistent API documentation across the codebase.
  * Supports TypeScript-specific JSDoc patterns and MCP server requirements.
- * 
+ *
  * @author Deep Code Reasoning MCP Team
  * @version 1.0.0
  * @since 2024
@@ -87,71 +87,71 @@ export class JSDocGenerator {
     function: {
       required: ['description', 'param', 'returns'],
       recommended: ['example', 'throws', 'since'],
-      forbidden: ['constructor']
+      forbidden: ['constructor'],
     },
     method: {
       required: ['description', 'param', 'returns'],
       recommended: ['example', 'throws', 'override'],
-      forbidden: ['constructor']
+      forbidden: ['constructor'],
     },
     class: {
       required: ['description'],
       recommended: ['example', 'since', 'author'],
-      forbidden: ['param', 'returns']
+      forbidden: ['param', 'returns'],
     },
     interface: {
       required: ['description'],
       recommended: ['example', 'since'],
-      forbidden: ['param', 'returns', 'constructor']
+      forbidden: ['param', 'returns', 'constructor'],
     },
     property: {
       required: ['description'],
       recommended: ['example', 'default'],
-      forbidden: ['param', 'returns', 'constructor']
+      forbidden: ['param', 'returns', 'constructor'],
     },
     type: {
       required: ['description'],
       recommended: ['example'],
-      forbidden: ['param', 'returns', 'constructor']
+      forbidden: ['param', 'returns', 'constructor'],
     },
     variable: {
       required: ['description'],
       recommended: ['example', 'default'],
-      forbidden: ['constructor']
-    }
+      forbidden: ['constructor'],
+    },
   };
 
   private static readonly MCP_SPECIFIC_TAGS = {
     mcpTool: {
       required: ['description', 'param', 'returns', 'mcpSchema'],
       recommended: ['example', 'mcpPermissions', 'mcpVersion'],
-      forbidden: []
+      forbidden: [],
     },
     mcpResource: {
       required: ['description', 'mcpUri', 'mcpMimeType'],
       recommended: ['example', 'mcpVersion'],
-      forbidden: ['param', 'returns']
+      forbidden: ['param', 'returns'],
     },
     mcpPrompt: {
       required: ['description', 'mcpArguments'],
       recommended: ['example', 'mcpVersion'],
-      forbidden: ['returns']
-    }
+      forbidden: ['returns'],
+    },
   };
 
   /**
    * Validates JSDoc documentation for a TypeScript file
-   * 
+   *
    * @param filePath - Absolute path to the TypeScript file
    * @param options - Validation options
    * @returns Promise resolving to validation results
-   * 
+   *
    * @example
    * ```typescript
    * const results = await JSDocGenerator.validateFile('./src/index.ts');
    * console.log(`Coverage: ${results.length} issues found`);
    * ```
-   * 
+   *
    * @throws {Error} When file cannot be read or parsed
    * @since 1.0.0
    */
@@ -161,7 +161,7 @@ export class JSDocGenerator {
       includePrivate?: boolean;
       strictMode?: boolean;
       customRequirements?: Record<string, JSDocTagRequirements>;
-    } = {}
+    } = {},
   ): Promise<JSDocValidationResult[]> {
     try {
       const sourceCode = await fs.promises.readFile(filePath, 'utf-8');
@@ -169,14 +169,14 @@ export class JSDocGenerator {
         filePath,
         sourceCode,
         ts.ScriptTarget.Latest,
-        true
+        true,
       );
 
       const results: JSDocValidationResult[] = [];
       const requirements = {
         ...this.DEFAULT_TAG_REQUIREMENTS,
         ...this.MCP_SPECIFIC_TAGS,
-        ...options.customRequirements
+        ...options.customRequirements,
       };
 
       // Traverse the AST to find documentable elements
@@ -198,17 +198,17 @@ export class JSDocGenerator {
 
   /**
    * Generates comprehensive project-wide JSDoc report
-   * 
+   *
    * @param projectRoot - Root directory of the project
    * @param options - Report generation options
    * @returns Promise resolving to complete JSDoc report
-   * 
+   *
    * @example
    * ```typescript
    * const report = await JSDocGenerator.generateProjectReport('./src');
    * console.log(`Project documentation coverage: ${report.coverage}%`);
    * ```
-   * 
+   *
    * @throws {Error} When project directory cannot be accessed
    * @since 1.0.0
    */
@@ -220,7 +220,7 @@ export class JSDocGenerator {
       strictMode?: boolean;
       outputFormat?: 'json' | 'markdown' | 'console';
       outputPath?: string;
-    } = {}
+    } = {},
   ): Promise<JSDocReport> {
     const tsFiles = await this.findTypeScriptFiles(projectRoot, options.includeTests);
     const allResults: JSDocValidationResult[] = [];
@@ -285,7 +285,7 @@ export class JSDocGenerator {
       fileResults,
       statistics: { byElementType, byFile },
       recommendations: this.generateRecommendations(allResults, coverage),
-      generatedAt: new Date().toISOString()
+      generatedAt: new Date().toISOString(),
     };
 
     // Output report if requested
@@ -298,13 +298,13 @@ export class JSDocGenerator {
 
   /**
    * Generates JSDoc template for a code element
-   * 
+   *
    * @param elementType - Type of code element
    * @param elementName - Name of the element
    * @param signature - Function/method signature if applicable
    * @param options - Template generation options
    * @returns Generated JSDoc template string
-   * 
+   *
    * @example
    * ```typescript
    * const template = JSDocGenerator.generateTemplate('function', 'getUserData', {
@@ -312,7 +312,7 @@ export class JSDocGenerator {
    *   returnType: 'Promise<UserData>'
    * });
    * ```
-   * 
+   *
    * @since 1.0.0
    */
   static generateTemplate(
@@ -324,10 +324,10 @@ export class JSDocGenerator {
       description?: string;
       isAsync?: boolean;
       throwsErrors?: string[];
-    } = {}
+    } = {},
   ): string {
     const lines: string[] = ['/**'];
-    
+
     // Description
     const description = options.description || `${this.capitalizeFirst(elementType)} ${elementName}`;
     lines.push(` * ${description}`);
@@ -371,13 +371,13 @@ export class JSDocGenerator {
 
   /**
    * Validates a single AST node for JSDoc compliance
-   * 
+   *
    * @param node - TypeScript AST node to validate
    * @param sourceFile - Source file containing the node
    * @param requirements - JSDoc requirements for different element types
    * @param options - Validation options
    * @returns Validation result or null if node should be skipped
-   * 
+   *
    * @private
    * @since 1.0.0
    */
@@ -385,7 +385,7 @@ export class JSDocGenerator {
     node: ts.Node,
     sourceFile: ts.SourceFile,
     requirements: Record<string, JSDocTagRequirements>,
-    options: any
+    options: any,
   ): JSDocValidationResult | null {
     // Determine if this node needs documentation
     const elementInfo = this.getElementInfo(node);
@@ -415,16 +415,16 @@ export class JSDocGenerator {
       invalidTags,
       suggestions,
       currentDoc: jsDocComment || undefined,
-      suggestedDoc
+      suggestedDoc,
     };
   }
 
   /**
    * Extracts element information from TypeScript AST node
-   * 
+   *
    * @param node - TypeScript AST node
    * @returns Element information or null if not documentable
-   * 
+   *
    * @private
    * @since 1.0.0
    */
@@ -438,7 +438,7 @@ export class JSDocGenerator {
       return {
         name: node.name.text,
         type: 'function',
-        isPrivate: false
+        isPrivate: false,
       };
     }
 
@@ -447,7 +447,7 @@ export class JSDocGenerator {
       return {
         name: ts.isIdentifier(node.name) ? node.name.text : 'method',
         type: 'method',
-        isPrivate
+        isPrivate,
       };
     }
 
@@ -455,7 +455,7 @@ export class JSDocGenerator {
       return {
         name: node.name.text,
         type: 'class',
-        isPrivate: false
+        isPrivate: false,
       };
     }
 
@@ -463,7 +463,7 @@ export class JSDocGenerator {
       return {
         name: node.name.text,
         type: 'interface',
-        isPrivate: false
+        isPrivate: false,
       };
     }
 
@@ -472,7 +472,7 @@ export class JSDocGenerator {
       return {
         name: ts.isIdentifier(node.name) ? node.name.text : 'property',
         type: 'property',
-        isPrivate
+        isPrivate,
       };
     }
 
@@ -480,7 +480,7 @@ export class JSDocGenerator {
       return {
         name: node.name.text,
         type: 'type',
-        isPrivate: false
+        isPrivate: false,
       };
     }
 
@@ -488,7 +488,7 @@ export class JSDocGenerator {
       return {
         name: node.name.text,
         type: 'variable',
-        isPrivate: false
+        isPrivate: false,
       };
     }
 
@@ -497,10 +497,10 @@ export class JSDocGenerator {
 
   /**
    * Extracts JSDoc comment from AST node
-   * 
+   *
    * @param node - TypeScript AST node
    * @returns JSDoc comment text or null if none exists
-   * 
+   *
    * @private
    * @since 1.0.0
    */
@@ -512,7 +512,7 @@ export class JSDocGenerator {
       const sourceFile = node.getSourceFile();
       const start = node.getFullStart();
       const fullText = sourceFile.getFullText();
-      
+
       // Look for JSDoc comment before the node
       const textBeforeNode = fullText.substring(start, node.getStart());
       const jsDocMatch = textBeforeNode.match(/\/\*\*([\s\S]*?)\*\//);
@@ -526,18 +526,18 @@ export class JSDocGenerator {
     const nodeStart = node.getFullStart();
     const nodeActualStart = node.getStart();
     const leadingTrivia = sourceFile.getFullText().substring(nodeStart, nodeActualStart);
-    
+
     const jsDocMatch = leadingTrivia.match(/\/\*\*([\s\S]*?)\*\//);
     return jsDocMatch ? jsDocMatch[0] : null;
   }
 
   /**
    * Validates JSDoc comment against requirements
-   * 
+   *
    * @param jsDoc - JSDoc comment text
    * @param requirements - Requirements for this element type
    * @returns Whether JSDoc meets requirements
-   * 
+   *
    * @private
    * @since 1.0.0
    */
@@ -564,11 +564,11 @@ export class JSDocGenerator {
 
   /**
    * Finds missing required JSDoc tags
-   * 
+   *
    * @param jsDoc - JSDoc comment text
    * @param requiredTags - List of required tags
    * @returns Array of missing tag names
-   * 
+   *
    * @private
    * @since 1.0.0
    */
@@ -589,11 +589,11 @@ export class JSDocGenerator {
 
   /**
    * Finds invalid JSDoc tags
-   * 
+   *
    * @param jsDoc - JSDoc comment text
    * @param requirements - Requirements for this element type
    * @returns Array of invalid tags with reasons
-   * 
+   *
    * @private
    * @since 1.0.0
    */
@@ -615,19 +615,19 @@ export class JSDocGenerator {
 
   /**
    * Generates improvement suggestions
-   * 
+   *
    * @param elementInfo - Information about the code element
    * @param missingTags - List of missing required tags
    * @param invalidTags - List of invalid tags
    * @returns Array of suggestion strings
-   * 
+   *
    * @private
    * @since 1.0.0
    */
   private static generateSuggestions(
     elementInfo: any,
     missingTags: string[],
-    invalidTags: Array<{ tag: string; reason: string }>
+    invalidTags: Array<{ tag: string; reason: string }>,
   ): string[] {
     const suggestions: string[] = [];
 
@@ -653,27 +653,27 @@ export class JSDocGenerator {
 
   /**
    * Generates suggested JSDoc for an element
-   * 
+   *
    * @param elementInfo - Information about the code element
    * @param node - TypeScript AST node
    * @returns Generated JSDoc template
-   * 
+   *
    * @private
    * @since 1.0.0
    */
   private static generateSuggestedDoc(elementInfo: any, node: ts.Node): string {
     return this.generateTemplate(elementInfo.type, elementInfo.name, {
-      description: `${this.capitalizeFirst(elementInfo.type)} ${elementInfo.name}`
+      description: `${this.capitalizeFirst(elementInfo.type)} ${elementInfo.name}`,
     });
   }
 
   /**
    * Finds all TypeScript files in a directory
-   * 
+   *
    * @param dir - Directory to search
    * @param includeTests - Whether to include test files
    * @returns Array of TypeScript file paths
-   * 
+   *
    * @private
    * @since 1.0.0
    */
@@ -683,7 +683,7 @@ export class JSDocGenerator {
 
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
-      
+
       if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
         files.push(...await this.findTypeScriptFiles(fullPath, includeTests));
       } else if (entry.isFile() && entry.name.endsWith('.ts')) {
@@ -698,11 +698,11 @@ export class JSDocGenerator {
 
   /**
    * Generates improvement recommendations based on analysis results
-   * 
+   *
    * @param results - All validation results
    * @param coverage - Overall coverage percentage
    * @returns Array of recommendation strings
-   * 
+   *
    * @private
    * @since 1.0.0
    */
@@ -736,16 +736,16 @@ export class JSDocGenerator {
 
   /**
    * Finds most commonly missing JSDoc tags
-   * 
+   *
    * @param results - Validation results
    * @returns Array of commonly missing tag names
-   * 
+   *
    * @private
    * @since 1.0.0
    */
   private static findCommonMissingTags(results: JSDocValidationResult[]): string[] {
     const tagCounts: Record<string, number> = {};
-    
+
     results.forEach(result => {
       result.missingTags.forEach(tag => {
         tagCounts[tag] = (tagCounts[tag] || 0) + 1;
@@ -760,16 +760,16 @@ export class JSDocGenerator {
 
   /**
    * Finds files with the most documentation issues
-   * 
+   *
    * @param results - Validation results
    * @returns Array of file paths with most issues
-   * 
+   *
    * @private
    * @since 1.0.0
    */
   private static findFilesWithMostIssues(results: JSDocValidationResult[]): string[] {
     const fileCounts: Record<string, number> = {};
-    
+
     results.forEach(result => {
       if (!result.isValid) {
         fileCounts[result.filePath] = (fileCounts[result.filePath] || 0) + 1;
@@ -784,11 +784,11 @@ export class JSDocGenerator {
 
   /**
    * Outputs JSDoc report in specified format
-   * 
+   *
    * @param report - JSDoc report to output
    * @param format - Output format
    * @param outputPath - Path to write output file
-   * 
+   *
    * @private
    * @since 1.0.0
    */
@@ -811,16 +811,16 @@ export class JSDocGenerator {
 
   /**
    * Generates markdown format report
-   * 
+   *
    * @param report - JSDoc report
    * @returns Markdown formatted report string
-   * 
+   *
    * @private
    * @since 1.0.0
    */
   private static generateMarkdownReport(report: JSDocReport): string {
     const lines: string[] = [];
-    
+
     lines.push('# 📚 JSDoc Documentation Analysis Report');
     lines.push('');
     lines.push(`**Generated:** ${report.generatedAt}`);
@@ -848,16 +848,16 @@ export class JSDocGenerator {
 
   /**
    * Generates console format report
-   * 
+   *
    * @param report - JSDoc report
    * @returns Console formatted report string
-   * 
+   *
    * @private
    * @since 1.0.0
    */
   private static generateConsoleReport(report: JSDocReport): string {
     const lines: string[] = [];
-    
+
     lines.push('JSDoc Documentation Report');
     lines.push('========================');
     lines.push(`Coverage: ${report.coverage}%`);
@@ -882,10 +882,10 @@ export class JSDocGenerator {
 
   /**
    * Capitalizes first letter of a string
-   * 
+   *
    * @param str - String to capitalize
    * @returns Capitalized string
-   * 
+   *
    * @private
    * @since 1.0.0
    */

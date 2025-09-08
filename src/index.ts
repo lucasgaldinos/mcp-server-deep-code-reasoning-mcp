@@ -1,4 +1,11 @@
 #!/usr/bin/env node
+/**
+ * @file This is the main entry point for the Deep Code Reasoning MCP server.
+ * It sets up the server, defines the available tools, and handles requests.
+ * @author Your Name
+ * @version 1.0.0
+ * @license MIT
+ */
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -17,22 +24,26 @@ import { InputValidator } from '@utils/InputValidator.js';
 import { logger } from '@utils/Logger.js';
 import { HealthChecker, BuiltinHealthChecks } from '@utils/HealthChecker.js';
 import { EnvironmentValidator } from '@utils/EnvironmentValidator.js';
+import { MemoryManagementProtocol } from '@utils/MemoryManagementProtocol.js';
 
-// Load environment variables
+/**
+ * Load and validate environment variables.
+ * @returns The validated environment configuration.
+ */
 dotenv.config();
 
 // Validate environment configuration
 const envConfig = (() => {
   try {
     const config = EnvironmentValidator.getValidatedConfig();
-    
+
     // Print configuration summary in development mode
     if (config.enableDevMode || config.nodeEnv === 'development') {
       console.log('\n🔧 Environment Configuration:');
       EnvironmentValidator.printConfigSummary(config);
       console.log('');
     }
-    
+
     return config;
   } catch (error) {
     console.error('❌ Environment validation failed:');
@@ -45,6 +56,10 @@ const envConfig = (() => {
 
 const GEMINI_API_KEY = envConfig.geminiApiKey;
 
+/**
+ * The main server instance.
+ * @type {Server}
+ */
 const server = new Server(
   {
     name: envConfig.mcpServerName,
@@ -63,7 +78,10 @@ if (GEMINI_API_KEY) {
   deepReasoner = new DeepCodeReasonerV2(GEMINI_API_KEY);
 }
 
-// Initialize health monitoring system
+/**
+ * The health checker instance.
+ * @type {HealthChecker}
+ */
 const healthChecker = HealthChecker.getInstance();
 
 // Register built-in health checks
@@ -74,115 +92,167 @@ healthChecker.registerCheck(BuiltinHealthChecks.eventBus());
 // Start health monitoring
 healthChecker.start();
 
-const EscalateAnalysisSchema = z.object({
-  claude_context: z.object({
-    attempted_approaches: z.array(z.string()),
-    partial_findings: z.array(z.any()),
-    stuck_description: z.string(),
-    code_scope: z.object({
-      files: z.array(z.string()),
-      entry_points: z.array(z.any()).optional(),
-      service_names: z.array(z.string()).optional(),
-    }),
-  }),
-  analysis_type: z.enum(['execution_trace', 'cross_system', 'performance', 'hypothesis_test']),
-  depth_level: z.number().min(1).max(5),
-  time_budget_seconds: z.number().default(60),
+/**
+ * The memory management protocol instance.
+ * @type {MemoryManagementProtocol}
+ */
+const memoryProtocol = new MemoryManagementProtocol({
+  thoughtsPerCheckpoint: 10,
+  maxCheckpoints: 100,
+  autoCheckpoint: true,
+  enablePersistence: true,
 });
 
+// Initialize memory protocol
+memoryProtocol.initialize().catch((error) => {
+  logger.error('Failed to initialize Memory Management Protocol', error);
+});
+
+/**
+ * Zod schema for the ClaudeCodeContext object.
+ * @type {z.ZodObject}
+ */
+const ClaudeCodeContextSchema = z.object({
+  attemptedApproaches: z.array(z.string()).describe('What Claude Code already tried'),
+  partialFindings: z.array(z.any()).describe('Any findings Claude Code discovered'),
+  stuckPoints: z.array(z.string()).describe('Description of where Claude Code got stuck'),
+  focusArea: z.object({
+    files: z.array(z.string()).describe('Files to analyze'),
+    entryPoints: z.array(z.any()).optional().describe('Specific functions/methods to start from'),
+    serviceNames: z.array(z.string()).optional().describe('Services involved in cross-system analysis'),
+  }).describe('The specific code scope for the analysis'),
+  analysisBudgetRemaining: z.number().optional().describe('Remaining budget for the analysis'),
+});
+
+/**
+ * Zod schema for the escalate_analysis tool.
+ * @type {z.ZodObject}
+ */
+const EscalateAnalysisSchema = z.object({
+  claudeContext: ClaudeCodeContextSchema,
+  analysisType: z.enum(['execution_trace', 'cross_system', 'performance', 'hypothesis_test']),
+  depthLevel: z.number().min(1).max(5),
+  timeBudgetSeconds: z.number().default(60),
+});
+
+/**
+ * Zod schema for the trace_execution_path tool.
+ * @type {z.ZodObject}
+ */
 const TraceExecutionPathSchema = z.object({
-  entry_point: z.object({
+  entryPoint: z.object({
     file: z.string(),
     line: z.number(),
-    function_name: z.string().optional(),
+    functionName: z.string().optional(),
   }),
-  max_depth: z.number().default(10),
-  include_data_flow: z.boolean().default(true),
+  maxDepth: z.number().default(10),
+  includeDataFlow: z.boolean().default(true),
 });
 
+/**
+ * Zod schema for the hypothesis_test tool.
+ * @type {z.ZodObject}
+ */
 const HypothesisTestSchema = z.object({
   hypothesis: z.string(),
-  code_scope: z.object({
+  codeScope: z.object({
     files: z.array(z.string()),
-    entry_points: z.array(z.any()).optional(),
+    entryPoints: z.array(z.any()).optional(),
   }),
-  test_approach: z.string(),
+  testApproach: z.string(),
 });
 
+/**
+ * Zod schema for the cross_system_impact tool.
+ * @type {z.ZodObject}
+ */
 const CrossSystemImpactSchema = z.object({
-  change_scope: z.object({
+  changeScope: z.object({
     files: z.array(z.string()),
-    service_names: z.array(z.string()).optional(),
+    serviceNames: z.array(z.string()).optional(),
   }),
-  impact_types: z.array(z.enum(['breaking', 'performance', 'behavioral'])).optional(),
+  impactTypes: z.array(z.enum(['breaking', 'performance', 'behavioral'])).optional(),
 });
 
+/**
+ * Zod schema for the performance_bottleneck tool.
+ * @type {z.ZodObject}
+ */
 const PerformanceBottleneckSchema = z.object({
-  code_path: z.object({
-    entry_point: z.object({
+  codePath: z.object({
+    entryPoint: z.object({
       file: z.string(),
       line: z.number(),
-      function_name: z.string().optional(),
+      functionName: z.string().optional(),
     }),
-    suspected_issues: z.array(z.string()).optional(),
+    suspectedIssues: z.array(z.string()).optional(),
   }),
-  profile_depth: z.number().min(1).max(5).default(3),
+  profileDepth: z.number().min(1).max(5).default(3),
 });
 
+/**
+ * Zod schema for the start_conversation tool.
+ * @type {z.ZodObject}
+ */
 const StartConversationSchema = z.object({
-  claude_context: z.object({
-    attempted_approaches: z.array(z.string()),
-    partial_findings: z.array(z.any()),
-    stuck_description: z.string(),
-    code_scope: z.object({
-      files: z.array(z.string()),
-      entry_points: z.array(z.any()).optional(),
-      service_names: z.array(z.string()).optional(),
-    }),
-  }),
-  analysis_type: z.enum(['execution_trace', 'cross_system', 'performance', 'hypothesis_test']),
-  initial_question: z.string().optional(),
+  claudeContext: ClaudeCodeContextSchema,
+  analysisType: z.enum(['execution_trace', 'cross_system', 'performance', 'hypothesis_test']),
+  initialQuestion: z.string().optional(),
 });
 
+/**
+ * Zod schema for the continue_conversation tool.
+ * @type {z.ZodObject}
+ */
 const ContinueConversationSchema = z.object({
-  session_id: z.string(),
+  sessionId: z.string(),
   message: z.string(),
-  include_code_snippets: z.boolean().optional(),
+  includeCodeSnippets: z.boolean().optional(),
 });
 
+/**
+ * Zod schema for the finalize_conversation tool.
+ * @type {z.ZodObject}
+ */
 const FinalizeConversationSchema = z.object({
-  session_id: z.string(),
-  summary_format: z.enum(['detailed', 'concise', 'actionable']).optional(),
+  sessionId: z.string(),
+  summaryFormat: z.enum(['detailed', 'concise', 'actionable']).optional(),
 });
 
+/**
+ * Zod schema for the get_conversation_status tool.
+ * @type {z.ZodObject}
+ */
 const GetConversationStatusSchema = z.object({
-  session_id: z.string(),
+  sessionId: z.string(),
 });
 
+/**
+ * Zod schema for the run_hypothesis_tournament tool.
+ * @type {z.ZodObject}
+ */
 const RunHypothesisTournamentSchema = z.object({
-  claude_context: z.object({
-    attempted_approaches: z.array(z.string()),
-    partial_findings: z.array(z.any()),
-    stuck_description: z.string(),
-    code_scope: z.object({
-      files: z.array(z.string()),
-      entry_points: z.array(z.any()).optional(),
-      service_names: z.array(z.string()).optional(),
-    }),
-  }),
+  claudeContext: ClaudeCodeContextSchema,
   issue: z.string(),
-  tournament_config: z.object({
-    max_hypotheses: z.number().min(2).max(20).optional(),
-    max_rounds: z.number().min(1).max(5).optional(),
-    parallel_sessions: z.number().min(1).max(10).optional(),
+  tournamentConfig: z.object({
+    maxHypotheses: z.number().min(2).max(20).optional(),
+    maxRounds: z.number().min(1).max(5).optional(),
+    parallelSessions: z.number().min(1).max(10).optional(),
   }).optional(),
 });
 
-// Health check schemas
+/**
+ * Zod schema for the health_check tool.
+ * @type {z.ZodObject}
+ */
 const HealthCheckSchema = z.object({
   check_name: z.string().optional(),
 });
 
+/**
+ * Zod schema for the health_summary tool.
+ * @type {z.ZodObject}
+ */
 const HealthSummarySchema = z.object({
   include_details: z.boolean().optional().default(true),
 });
@@ -196,23 +266,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            claude_context: {
+            claudeContext: {
               type: 'object',
               properties: {
-                attempted_approaches: {
+                attemptedApproaches: {
                   type: 'array',
                   items: { type: 'string' },
                   description: 'What Claude Code already tried',
                 },
-                partial_findings: {
+                partialFindings: {
                   type: 'array',
                   description: 'Any findings Claude Code discovered',
                 },
-                stuck_description: {
-                  type: 'string',
+                stuckPoints: {
+                  type: 'array',
+                  items: { type: 'string' },
                   description: 'Description of where Claude Code got stuck',
                 },
-                code_scope: {
+                focusArea: {
                   type: 'object',
                   properties: {
                     files: {
@@ -220,11 +291,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                       items: { type: 'string' },
                       description: 'Files to analyze',
                     },
-                    entry_points: {
+                    entryPoints: {
                       type: 'array',
                       description: 'Specific functions/methods to start from',
                     },
-                    service_names: {
+                    serviceNames: {
                       type: 'array',
                       items: { type: 'string' },
                       description: 'Services involved in cross-system analysis',
@@ -233,26 +304,26 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                   required: ['files'],
                 },
               },
-              required: ['attempted_approaches', 'partial_findings', 'stuck_description', 'code_scope'],
+              required: ['attemptedApproaches', 'partialFindings', 'stuckPoints', 'focusArea'],
             },
-            analysis_type: {
+            analysisType: {
               type: 'string',
               enum: ['execution_trace', 'cross_system', 'performance', 'hypothesis_test'],
               description: 'Type of deep analysis to perform',
             },
-            depth_level: {
+            depthLevel: {
               type: 'number',
               minimum: 1,
               maximum: 5,
               description: 'How deep to analyze (1=shallow, 5=very deep)',
             },
-            time_budget_seconds: {
+            timeBudgetSeconds: {
               type: 'number',
               default: 60,
               description: 'Maximum time for analysis',
             },
           },
-          required: ['claude_context', 'analysis_type'],
+          required: ['claudeContext', 'analysisType', 'depthLevel'],
         },
       },
       {
@@ -261,19 +332,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            entry_point: {
+            entryPoint: {
               type: 'object',
               properties: {
                 file: { type: 'string' },
                 line: { type: 'number' },
-                function_name: { type: 'string' },
+                functionName: { type: 'string' },
               },
               required: ['file', 'line'],
             },
-            max_depth: { type: 'number', default: 10 },
-            include_data_flow: { type: 'boolean', default: true },
+            maxDepth: { type: 'number', default: 10 },
+            includeDataFlow: { type: 'boolean', default: true },
           },
-          required: ['entry_point'],
+          required: ['entryPoint'],
         },
       },
       {
@@ -283,17 +354,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           type: 'object',
           properties: {
             hypothesis: { type: 'string' },
-            code_scope: {
+            codeScope: {
               type: 'object',
               properties: {
                 files: { type: 'array', items: { type: 'string' } },
-                entry_points: { type: 'array' },
+                entryPoints: { type: 'array' },
               },
               required: ['files'],
             },
-            test_approach: { type: 'string' },
+            testApproach: { type: 'string' },
           },
-          required: ['hypothesis', 'code_scope', 'test_approach'],
+          required: ['hypothesis', 'codeScope', 'testApproach'],
         },
       },
       {
@@ -302,20 +373,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            change_scope: {
+            changeScope: {
               type: 'object',
               properties: {
                 files: { type: 'array', items: { type: 'string' } },
-                service_names: { type: 'array', items: { type: 'string' } },
+                serviceNames: { type: 'array', items: { type: 'string' } },
               },
               required: ['files'],
             },
-            impact_types: {
+            impactTypes: {
               type: 'array',
               items: { type: 'string', enum: ['breaking', 'performance', 'behavioral'] },
             },
           },
-          required: ['change_scope'],
+          required: ['changeScope'],
         },
       },
       {
@@ -324,25 +395,25 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            code_path: {
+            codePath: {
               type: 'object',
               properties: {
-                entry_point: {
+                entryPoint: {
                   type: 'object',
                   properties: {
                     file: { type: 'string' },
                     line: { type: 'number' },
-                    function_name: { type: 'string' },
+                    functionName: { type: 'string' },
                   },
                   required: ['file', 'line'],
                 },
-                suspected_issues: { type: 'array', items: { type: 'string' } },
+                suspectedIssues: { type: 'array', items: { type: 'string' } },
               },
-              required: ['entry_point'],
+              required: ['entryPoint'],
             },
-            profile_depth: { type: 'number', minimum: 1, maximum: 5, default: 3 },
+            profileDepth: { type: 'number', minimum: 1, maximum: 5, default: 3 },
           },
-          required: ['code_path'],
+          required: ['codePath'],
         },
       },
       {
@@ -351,23 +422,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            claude_context: {
+            claudeContext: {
               type: 'object',
               properties: {
-                attempted_approaches: {
+                attemptedApproaches: {
                   type: 'array',
                   items: { type: 'string' },
                   description: 'What Claude Code already tried',
                 },
-                partial_findings: {
+                partialFindings: {
                   type: 'array',
                   description: 'Any findings Claude Code discovered',
                 },
-                stuck_description: {
-                  type: 'string',
+                stuckPoints: {
+                  type: 'array',
+                  items: { type: 'string' },
                   description: 'Description of where Claude Code got stuck',
                 },
-                code_scope: {
+                focusArea: {
                   type: 'object',
                   properties: {
                     files: {
@@ -375,11 +447,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                       items: { type: 'string' },
                       description: 'Files to analyze',
                     },
-                    entry_points: {
+                    entryPoints: {
                       type: 'array',
                       description: 'Specific functions/methods to start from',
                     },
-                    service_names: {
+                    serviceNames: {
                       type: 'array',
                       items: { type: 'string' },
                       description: 'Services involved in cross-system analysis',
@@ -388,19 +460,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                   required: ['files'],
                 },
               },
-              required: ['attempted_approaches', 'partial_findings', 'stuck_description', 'code_scope'],
+              required: ['attemptedApproaches', 'partialFindings', 'stuckPoints', 'focusArea'],
             },
-            analysis_type: {
+            analysisType: {
               type: 'string',
               enum: ['execution_trace', 'cross_system', 'performance', 'hypothesis_test'],
               description: 'Type of deep analysis to perform',
             },
-            initial_question: {
+            initialQuestion: {
               type: 'string',
               description: 'Initial question to start the conversation',
             },
           },
-          required: ['claude_context', 'analysis_type'],
+          required: ['claudeContext', 'analysisType'],
         },
       },
       {
@@ -409,7 +481,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            session_id: {
+            sessionId: {
               type: 'string',
               description: 'ID of the conversation session',
             },
@@ -417,12 +489,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: 'string',
               description: 'Claude\'s response or follow-up question',
             },
-            include_code_snippets: {
+            includeCodeSnippets: {
               type: 'boolean',
               description: 'Whether to include code snippets in response',
             },
           },
-          required: ['session_id', 'message'],
+          required: ['sessionId', 'message'],
         },
       },
       {
@@ -431,17 +503,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            session_id: {
+            sessionId: {
               type: 'string',
               description: 'ID of the conversation session',
             },
-            summary_format: {
+            summaryFormat: {
               type: 'string',
               enum: ['detailed', 'concise', 'actionable'],
               description: 'Format for the final summary',
             },
           },
-          required: ['session_id'],
+          required: ['sessionId'],
         },
       },
       {
@@ -450,12 +522,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            session_id: {
+            sessionId: {
               type: 'string',
               description: 'ID of the conversation session',
             },
           },
-          required: ['session_id'],
+          required: ['sessionId'],
         },
       },
       {
@@ -464,23 +536,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            claude_context: {
+            claudeContext: {
               type: 'object',
               properties: {
-                attempted_approaches: {
+                attemptedApproaches: {
                   type: 'array',
                   items: { type: 'string' },
                   description: 'What Claude Code already tried',
                 },
-                partial_findings: {
+                partialFindings: {
                   type: 'array',
                   description: 'Any findings Claude Code discovered',
                 },
-                stuck_description: {
-                  type: 'string',
+                stuckPoints: {
+                  type: 'array',
+                  items: { type: 'string' },
                   description: 'Description of where Claude Code got stuck',
                 },
-                code_scope: {
+                focusArea: {
                   type: 'object',
                   properties: {
                     files: {
@@ -488,11 +561,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                       items: { type: 'string' },
                       description: 'Files to analyze',
                     },
-                    entry_points: {
+                    entryPoints: {
                       type: 'array',
                       description: 'Specific functions/methods to start from',
                     },
-                    service_names: {
+                    serviceNames: {
                       type: 'array',
                       items: { type: 'string' },
                       description: 'Services involved in cross-system analysis',
@@ -501,28 +574,28 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                   required: ['files'],
                 },
               },
-              required: ['attempted_approaches', 'partial_findings', 'stuck_description', 'code_scope'],
+              required: ['attemptedApproaches', 'partialFindings', 'stuckPoints', 'focusArea'],
             },
             issue: {
               type: 'string',
               description: 'Description of the issue to investigate',
             },
-            tournament_config: {
+            tournamentConfig: {
               type: 'object',
               properties: {
-                max_hypotheses: {
+                maxHypotheses: {
                   type: 'number',
                   minimum: 2,
                   maximum: 20,
                   description: 'Number of initial hypotheses to generate (default: 6)',
                 },
-                max_rounds: {
+                maxRounds: {
                   type: 'number',
                   minimum: 1,
                   maximum: 5,
                   description: 'Maximum tournament rounds (default: 3)',
                 },
-                parallel_sessions: {
+                parallelSessions: {
                   type: 'number',
                   minimum: 1,
                   maximum: 10,
@@ -531,7 +604,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               },
             },
           },
-          required: ['claude_context', 'issue'],
+          required: ['claudeContext', 'issue'],
         },
       },
       {
@@ -582,18 +655,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const parsed = EscalateAnalysisSchema.parse(args);
 
         // Validate and sanitize the Claude context
-        const validatedContext = InputValidator.validateClaudeContext(parsed.claude_context);
+        const validatedContext = InputValidator.validateClaudeContext(parsed.claudeContext);
 
         // Override with specific values from the parsed input
         const context: ClaudeCodeContext = {
           ...validatedContext,
-          analysisBudgetRemaining: parsed.time_budget_seconds,
+          analysisBudgetRemaining: parsed.timeBudgetSeconds,
         };
 
         const result = await deepReasoner.escalateFromClaudeCode(
           context,
-          parsed.analysis_type,
-          parsed.depth_level || 3,
+          parsed.analysisType,
+          parsed.depthLevel || 3,
         );
 
         return {
@@ -610,7 +683,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const parsed = TraceExecutionPathSchema.parse(args);
 
         // Validate the entry point file path
-        const validatedPath = InputValidator.validateFilePaths([parsed.entry_point.file])[0];
+        const validatedPath = InputValidator.validateFilePaths([parsed.entryPoint.file])[0];
         if (!validatedPath) {
           throw new McpError(
             ErrorCode.InvalidParams,
@@ -619,9 +692,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
 
         const result = await deepReasoner.traceExecutionPath(
-          { ...parsed.entry_point, file: validatedPath },
-          parsed.max_depth,
-          parsed.include_data_flow,
+          { ...parsed.entryPoint, file: validatedPath },
+          parsed.maxDepth,
+          parsed.includeDataFlow,
         );
 
         return {
@@ -638,7 +711,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const parsed = HypothesisTestSchema.parse(args);
 
         // Validate file paths
-        const validatedFiles = InputValidator.validateFilePaths(parsed.code_scope.files);
+        const validatedFiles = InputValidator.validateFilePaths(parsed.codeScope.files);
         if (validatedFiles.length === 0) {
           throw new McpError(
             ErrorCode.InvalidParams,
@@ -649,7 +722,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const result = await deepReasoner.testHypothesis(
           InputValidator.validateString(parsed.hypothesis, 2000),
           validatedFiles,
-          InputValidator.validateString(parsed.test_approach, 1000),
+          InputValidator.validateString(parsed.testApproach, 1000),
         );
 
         return {
@@ -666,7 +739,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const parsed = CrossSystemImpactSchema.parse(args);
 
         // Validate file paths
-        const validatedFiles = InputValidator.validateFilePaths(parsed.change_scope.files);
+        const validatedFiles = InputValidator.validateFilePaths(parsed.changeScope.files);
         if (validatedFiles.length === 0) {
           throw new McpError(
             ErrorCode.InvalidParams,
@@ -676,7 +749,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         const result = await deepReasoner.analyzeCrossSystemImpact(
           validatedFiles,
-          parsed.impact_types,
+          parsed.impactTypes,
         );
 
         return {
@@ -693,7 +766,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const parsed = PerformanceBottleneckSchema.parse(args);
 
         // Validate the entry point file path
-        const validatedPath = InputValidator.validateFilePaths([parsed.code_path.entry_point.file])[0];
+        const validatedPath = InputValidator.validateFilePaths([parsed.codePath.entryPoint.file])[0];
         if (!validatedPath) {
           throw new McpError(
             ErrorCode.InvalidParams,
@@ -702,10 +775,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
 
         const result = await deepReasoner.analyzePerformance(
-          { ...parsed.code_path.entry_point, file: validatedPath },
-          parsed.profile_depth,
-          parsed.code_path.suspected_issues ?
-            InputValidator.validateStringArray(parsed.code_path.suspected_issues) :
+          { ...parsed.codePath.entryPoint, file: validatedPath },
+          parsed.profileDepth,
+          parsed.codePath.suspectedIssues ?
+            InputValidator.validateStringArray(parsed.codePath.suspectedIssues) :
             undefined,
         );
 
@@ -723,7 +796,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const parsed = StartConversationSchema.parse(args);
 
         // Validate and sanitize the Claude context
-        const validatedContext = InputValidator.validateClaudeContext(parsed.claude_context);
+        const validatedContext = InputValidator.validateClaudeContext(parsed.claudeContext);
 
         // Override default budget
         const context: ClaudeCodeContext = {
@@ -733,8 +806,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         const result = await deepReasoner.startConversation(
           context,
-          parsed.analysis_type,
-          parsed.initial_question,
+          parsed.analysisType,
+          parsed.initialQuestion,
         );
 
         return {
@@ -750,9 +823,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'continue_conversation': {
         const parsed = ContinueConversationSchema.parse(args);
         const result = await deepReasoner.continueConversation(
-          parsed.session_id,
+          parsed.sessionId,
           parsed.message,
-          parsed.include_code_snippets,
+          parsed.includeCodeSnippets,
         );
 
         return {
@@ -768,8 +841,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'finalize_conversation': {
         const parsed = FinalizeConversationSchema.parse(args);
         const result = await deepReasoner.finalizeConversation(
-          parsed.session_id,
-          parsed.summary_format,
+          parsed.sessionId,
+          parsed.summaryFormat,
         );
 
         return {
@@ -785,7 +858,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'get_conversation_status': {
         const parsed = GetConversationStatusSchema.parse(args);
         const result = await deepReasoner.getConversationStatus(
-          parsed.session_id,
+          parsed.sessionId,
         );
 
         return {
@@ -802,7 +875,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const parsed = RunHypothesisTournamentSchema.parse(args);
 
         // Validate and sanitize the Claude context
-        const validatedContext = InputValidator.validateClaudeContext(parsed.claude_context);
+        const validatedContext = InputValidator.validateClaudeContext(parsed.claudeContext);
 
         // Override with specific values from the parsed input
         const context: ClaudeCodeContext = {
@@ -811,9 +884,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
 
         const tournamentConfig = {
-          maxHypotheses: parsed.tournament_config?.max_hypotheses ?? 6,
-          maxRounds: parsed.tournament_config?.max_rounds ?? 3,
-          parallelSessions: parsed.tournament_config?.parallel_sessions ?? 4,
+          maxHypotheses: parsed.tournamentConfig?.maxHypotheses ?? 6,
+          maxRounds: parsed.tournamentConfig?.maxRounds ?? 3,
+          parallelSessions: parsed.tournamentConfig?.parallelSessions ?? 4,
         };
 
         const result = await deepReasoner.runHypothesisTournament(
@@ -952,6 +1025,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
+/**
+ * The main function that starts the server.
+ */
 async function main() {
   logger.info('Starting Deep Code Reasoning MCP server...');
 

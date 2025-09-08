@@ -1,18 +1,18 @@
 /**
  * @fileoverview Unified Configuration Management System
- * 
+ *
  * This module provides a centralized configuration management system that builds
  * upon the EnvironmentValidator foundation. It implements the Strategy pattern
  * for different configuration sources and provides a clean, unified interface
  * for accessing configuration throughout the application.
- * 
+ *
  * Key features:
  * - Multiple configuration sources (environment, files, defaults)
  * - Runtime configuration updates
  * - Configuration validation and type safety
  * - Configuration change notifications
  * - Hierarchical configuration management
- * 
+ *
  * @author Deep Code Reasoning MCP Server
  * @version 1.0.0
  * @since 2025-01-09
@@ -21,7 +21,6 @@
 import { IEnvironmentConfig, EnvironmentValidator } from '@utils/EnvironmentValidator.js';
 import { Logger } from '@utils/Logger.js';
 import { EventEmitter } from 'events';
-import { z } from 'zod';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -88,7 +87,7 @@ export class EnvironmentConfigSource implements IConfigurationSource {
 export class FileConfigSource implements IConfigurationSource {
   readonly name = 'file';
   readonly priority = ConfigSourcePriority.CONFIG_FILE;
-  
+
   private readonly logger = new Logger('[ConfigFile]');
   private readonly filePath: string;
   private watchCallback?: (changes: Partial<IEnvironmentConfig>) => void;
@@ -106,7 +105,7 @@ export class FileConfigSource implements IConfigurationSource {
 
       const content = await fs.promises.readFile(this.filePath, 'utf-8');
       const config = JSON.parse(content);
-      
+
       this.logger.debug(`Loaded configuration from ${this.filePath}`);
       return config;
     } catch (error) {
@@ -119,10 +118,10 @@ export class FileConfigSource implements IConfigurationSource {
     try {
       const dir = path.dirname(this.filePath);
       await fs.promises.mkdir(dir, { recursive: true });
-      
+
       const content = JSON.stringify(config, null, 2);
       await fs.promises.writeFile(this.filePath, content, 'utf-8');
-      
+
       this.logger.info(`Saved configuration to ${this.filePath}`);
     } catch (error) {
       this.logger.error(`Failed to save configuration to ${this.filePath}:`, error);
@@ -132,7 +131,7 @@ export class FileConfigSource implements IConfigurationSource {
 
   watch(callback: (changes: Partial<IEnvironmentConfig>) => void): void {
     this.watchCallback = callback;
-    
+
     if (fs.existsSync(this.filePath)) {
       fs.watchFile(this.filePath, { interval: 1000 }, async () => {
         try {
@@ -161,7 +160,7 @@ export class DefaultConfigSource implements IConfigurationSource {
 
 /**
  * Unified Configuration Manager
- * 
+ *
  * Provides centralized configuration management with multiple sources,
  * runtime updates, validation, and change notifications.
  */
@@ -270,7 +269,7 @@ export class ConfigurationManager extends EventEmitter {
 
     this.runtimeOverrides.set(path, override);
     this.logger.info(`Set runtime override for ${path}: ${JSON.stringify(value)}`);
-    
+
     // Trigger configuration reload to apply override
     this.applyRuntimeOverrides();
     this.emitConfigurationChange({
@@ -290,7 +289,7 @@ export class ConfigurationManager extends EventEmitter {
     if (override) {
       this.runtimeOverrides.delete(path);
       this.logger.info(`Removed runtime override for ${path}`);
-      
+
       // Reload configuration to remove override effect
       this.reloadConfiguration();
     }
@@ -357,7 +356,7 @@ export class ConfigurationManager extends EventEmitter {
   /**
    * Validate configuration
    */
-  private validateConfiguration(config: any): IEnvironmentConfig {
+  private validateConfiguration(_config: any): IEnvironmentConfig {
     try {
       // Use EnvironmentValidator for validation
       return EnvironmentValidator.getValidatedConfig();
@@ -435,7 +434,7 @@ export class ConfigurationManager extends EventEmitter {
   private setupFileWatching(): void {
     for (const source of this.sources.values()) {
       if (source.watch) {
-        source.watch((changes) => {
+        source.watch((_changes) => {
           this.logger.debug(`Configuration changed in ${source.name}`);
           this.reloadConfiguration();
         });

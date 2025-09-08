@@ -1,6 +1,6 @@
 /**
  * Naming Conventions Guide and Validator for Deep Code Reasoning MCP Server
- * 
+ *
  * This module defines and enforces consistent naming conventions across the codebase.
  * All naming conventions follow TypeScript/JavaScript best practices with specific
  * project requirements for MCP server development.
@@ -14,7 +14,7 @@ export interface INamingConventions {
     config: RegExp;
     docs: RegExp;
   };
-  
+
   // Code Element Conventions
   variables: RegExp;
   functions: RegExp;
@@ -23,13 +23,13 @@ export interface INamingConventions {
   types: RegExp;
   enums: RegExp;
   constants: RegExp;
-  
+
   // API and Schema Conventions
   apiParameters: RegExp;
   schemaNames: RegExp;
   toolNames: RegExp;
   errorCodes: RegExp;
-  
+
   // Special Cases
   eventTypes: RegExp;
   logMessages: RegExp;
@@ -44,13 +44,13 @@ export class NamingConventions {
   static readonly FILE_PATTERNS = {
     // TypeScript source files: camelCase.ts
     typescript: /^[a-z][a-zA-Z0-9]*\.ts$/,
-    
+
     // Test files: camelCase.test.ts or ClassName.test.ts
     test: /^[a-zA-Z][a-zA-Z0-9]*\.test\.ts$/,
-    
+
     // Configuration files: kebab-case or camelCase
     config: /^([\w-]+\.)?(config|rc|eslint|prettier|jest|tsconfig)\.[\w.]+$/,
-    
+
     // Documentation files: UPPERCASE.md or kebab-case.md
     docs: /^([A-Z_]+|[\w-]+)\.md$/,
   };
@@ -60,22 +60,22 @@ export class NamingConventions {
     // Variables and functions: camelCase
     variables: /^[a-z][a-zA-Z0-9]*$/,
     functions: /^[a-z][a-zA-Z0-9]*$/,
-    
+
     // Classes: PascalCase
     classes: /^[A-Z][a-zA-Z0-9]*$/,
-    
+
     // Interfaces: PascalCase (modern TypeScript convention, no I prefix)
     interfaces: /^[A-Z][a-zA-Z0-9]*$/,
-    
+
     // Type aliases: PascalCase
     types: /^[A-Z][a-zA-Z0-9]*$/,
-    
+
     // Enums: PascalCase
     enums: /^[A-Z][a-zA-Z0-9]*$/,
-    
+
     // Constants: SCREAMING_SNAKE_CASE
     constants: /^[A-Z][A-Z0-9_]*$/,
-    
+
     // Private members: leading underscore + camelCase
     privateMethods: /^_[a-z][a-zA-Z0-9]*$/,
     privateFields: /^_[a-z][a-zA-Z0-9]*$/,
@@ -85,13 +85,13 @@ export class NamingConventions {
   static readonly API_PATTERNS = {
     // MCP tool parameters: snake_case (external API requirement)
     apiParameters: /^[a-z][a-z0-9_]*$/,
-    
+
     // Zod schema names: PascalCase + 'Schema'
     schemaNames: /^[A-Z][a-zA-Z0-9]*Schema$/,
-    
+
     // MCP tool names: snake_case
     toolNames: /^[a-z][a-z0-9_]*$/,
-    
+
     // Error codes: SCREAMING_SNAKE_CASE
     errorCodes: /^[A-Z][A-Z0-9_]*$/,
   };
@@ -100,10 +100,10 @@ export class NamingConventions {
   static readonly SPECIAL_PATTERNS = {
     // Event types: kebab-case
     eventTypes: /^[a-z][a-z0-9-]*$/,
-    
+
     // Log messages: Sentence case with context prefix
     logMessages: /^\[[A-Z][a-zA-Z0-9]*\] [A-Z].*$/,
-    
+
     // Environment config keys: SCREAMING_SNAKE_CASE
     configKeys: /^[A-Z][A-Z0-9_]*$/,
   };
@@ -114,7 +114,7 @@ export class NamingConventions {
   static validateName(name: string, type: NamingType): INamingValidationResult {
     const pattern = this.getPatternForType(type);
     const isValid = pattern.test(name);
-    
+
     return {
       isValid,
       name,
@@ -135,7 +135,7 @@ export class NamingConventions {
       case 'test-file': return this.FILE_PATTERNS.test;
       case 'config-file': return this.FILE_PATTERNS.config;
       case 'doc-file': return this.FILE_PATTERNS.docs;
-      
+
       // Code elements
       case 'variable': return this.CODE_PATTERNS.variables;
       case 'function': return this.CODE_PATTERNS.functions;
@@ -146,18 +146,18 @@ export class NamingConventions {
       case 'constant': return this.CODE_PATTERNS.constants;
       case 'private-method': return this.CODE_PATTERNS.privateMethods;
       case 'private-field': return this.CODE_PATTERNS.privateFields;
-      
+
       // API elements
       case 'api-parameter': return this.API_PATTERNS.apiParameters;
       case 'schema-name': return this.API_PATTERNS.schemaNames;
       case 'tool-name': return this.API_PATTERNS.toolNames;
       case 'error-code': return this.API_PATTERNS.errorCodes;
-      
+
       // Special cases
       case 'event-type': return this.SPECIAL_PATTERNS.eventTypes;
       case 'log-message': return this.SPECIAL_PATTERNS.logMessages;
       case 'config-key': return this.SPECIAL_PATTERNS.configKeys;
-      
+
       default:
         throw new Error(`Unknown naming type: ${type}`);
     }
@@ -171,36 +171,36 @@ export class NamingConventions {
       case 'variable':
       case 'function':
         return this.toCamelCase(name);
-      
+
       case 'class':
       case 'type':
       case 'enum':
         return this.toPascalCase(name);
-      
+
       case 'interface':
         return this.toPascalCase(name);
-      
+
       case 'constant':
       case 'error-code':
       case 'config-key':
         return this.toScreamingSnakeCase(name);
-      
+
       case 'api-parameter':
       case 'tool-name':
         return this.toSnakeCase(name);
-      
+
       case 'event-type':
         return this.toKebabCase(name);
-      
+
       case 'schema-name':
         const schemaBase = this.toPascalCase(name);
         return schemaBase.endsWith('Schema') ? schemaBase : `${schemaBase}Schema`;
-      
+
       case 'private-method':
       case 'private-field':
         const camelName = this.toCamelCase(name);
         return camelName.startsWith('_') ? camelName : `_${camelName}`;
-      
+
       default:
         return name;
     }
@@ -213,47 +213,47 @@ export class NamingConventions {
     switch (type) {
       case 'typescript-file':
         return ['index.ts', 'geminiService.ts', 'environmentValidator.ts'];
-      
+
       case 'test-file':
         return ['geminiService.test.ts', 'EnvironmentValidator.test.ts'];
-      
+
       case 'variable':
       case 'function':
         return ['userName', 'validateInput', 'getCurrentSession', 'apiKey'];
-      
+
       case 'class':
         return ['GeminiService', 'EnvironmentValidator', 'ConversationManager'];
-      
+
       case 'interface':
         return ['UserData', 'ApiResponse', 'ConversationState', 'EnvironmentConfig'];
-      
+
       case 'type':
         return ['AnalysisType', 'EventHandler', 'ConversationState'];
-      
+
       case 'enum':
         return ['LogLevel', 'AnalysisStatus', 'EventType'];
-      
+
       case 'constant':
         return ['GEMINI_API_KEY', 'MAX_RETRIES', 'DEFAULT_TIMEOUT'];
-      
+
       case 'api-parameter':
         return ['claude_context', 'session_id', 'analysis_type'];
-      
+
       case 'tool-name':
         return ['start_conversation', 'analyze_with_gemini', 'trace_execution_path'];
-      
+
       case 'schema-name':
         return ['ClaudeContextSchema', 'ValidationResultSchema', 'ConfigSchema'];
-      
+
       case 'error-code':
         return ['API_ERROR', 'SESSION_NOT_FOUND', 'RATE_LIMIT_EXCEEDED'];
-      
+
       case 'event-type':
         return ['analysis-started', 'conversation-ended', 'health-check-failed'];
-      
+
       case 'config-key':
         return ['GEMINI_API_KEY', 'LOG_LEVEL', 'ENABLE_DEBUG_LOGGING'];
-      
+
       default:
         return [];
     }
@@ -311,14 +311,14 @@ export class NamingConventions {
    */
   static validateFile(content: string, filePath: string): IFileValidationResult {
     const violations: INamingViolation[] = [];
-    
+
     // Extract different code elements and validate them
     this.extractAndValidateClasses(content, violations);
     this.extractAndValidateInterfaces(content, violations);
     this.extractAndValidateFunctions(content, violations);
     this.extractAndValidateVariables(content, violations);
     this.extractAndValidateConstants(content, violations);
-    
+
     return {
       filePath,
       isValid: violations.length === 0,
@@ -334,11 +334,11 @@ export class NamingConventions {
   private static extractAndValidateClasses(content: string, violations: INamingViolation[]): void {
     const classRegex = /(?:export\s+)?(?:abstract\s+)?class\s+(\w+)/g;
     let match;
-    
+
     while ((match = classRegex.exec(content)) !== null) {
       const className = match[1];
       const result = this.validateName(className, 'class');
-      
+
       if (!result.isValid) {
         violations.push({
           type: 'class',
@@ -355,11 +355,11 @@ export class NamingConventions {
   private static extractAndValidateInterfaces(content: string, violations: INamingViolation[]): void {
     const interfaceRegex = /(?:export\s+)?interface\s+(\w+)/g;
     let match;
-    
+
     while ((match = interfaceRegex.exec(content)) !== null) {
       const interfaceName = match[1];
       const result = this.validateName(interfaceName, 'interface');
-      
+
       if (!result.isValid) {
         violations.push({
           type: 'interface',
@@ -376,17 +376,17 @@ export class NamingConventions {
   private static extractAndValidateFunctions(content: string, violations: INamingViolation[]): void {
     const functionRegex = /(?:export\s+)?(?:async\s+)?function\s+(\w+)|(\w+)\s*[:=]\s*(?:async\s+)?\(/g;
     let match;
-    
+
     while ((match = functionRegex.exec(content)) !== null) {
       const functionName = match[1] || match[2];
-      
+
       // Skip constructor and special methods
       if (functionName === 'constructor' || functionName.startsWith('set') || functionName.startsWith('get')) {
         continue;
       }
-      
+
       const result = this.validateName(functionName, 'function');
-      
+
       if (!result.isValid) {
         violations.push({
           type: 'function',
@@ -403,17 +403,17 @@ export class NamingConventions {
   private static extractAndValidateVariables(content: string, violations: INamingViolation[]): void {
     const variableRegex = /(?:const|let|var)\s+(\w+)/g;
     let match;
-    
+
     while ((match = variableRegex.exec(content)) !== null) {
       const variableName = match[1];
-      
+
       // Skip constants (all uppercase)
       if (variableName === variableName.toUpperCase()) {
         continue;
       }
-      
+
       const result = this.validateName(variableName, 'variable');
-      
+
       if (!result.isValid) {
         violations.push({
           type: 'variable',
@@ -430,11 +430,11 @@ export class NamingConventions {
   private static extractAndValidateConstants(content: string, violations: INamingViolation[]): void {
     const constantRegex = /(?:const|static readonly)\s+([A-Z_][A-Z0-9_]*)/g;
     let match;
-    
+
     while ((match = constantRegex.exec(content)) !== null) {
       const constantName = match[1];
       const result = this.validateName(constantName, 'constant');
-      
+
       if (!result.isValid) {
         violations.push({
           type: 'constant',
@@ -460,13 +460,13 @@ export class NamingConventions {
       /\w+\s*[:=]\s*(?:async\s+)?\(/g,
       /(?:const|let|var)\s+\w+/g,
     ];
-    
+
     let count = 0;
     for (const pattern of patterns) {
       const matches = content.match(pattern);
       count += matches ? matches.length : 0;
     }
-    
+
     return Math.max(count, 1); // Avoid division by zero
   }
 
@@ -477,7 +477,7 @@ export class NamingConventions {
     const fileResults: IFileValidationResult[] = [];
     let totalViolations = 0;
     let totalElements = 0;
-    
+
     for (const [filePath, content] of files) {
       if (filePath.endsWith('.ts') && !filePath.includes('node_modules')) {
         const result = this.validateFile(content, filePath);
@@ -486,11 +486,11 @@ export class NamingConventions {
         totalElements += result.summary.totalChecks;
       }
     }
-    
-    const compliancePercentage = totalElements > 0 
+
+    const compliancePercentage = totalElements > 0
       ? Math.round((1 - totalViolations / totalElements) * 100)
       : 100;
-    
+
     return {
       summary: {
         filesChecked: fileResults.length,
@@ -506,7 +506,7 @@ export class NamingConventions {
   private static generateRecommendations(fileResults: IFileValidationResult[]): string[] {
     const recommendations: string[] = [];
     const violationTypes = new Map<string, number>();
-    
+
     // Count violation types
     for (const result of fileResults) {
       for (const violation of result.violations) {
@@ -514,25 +514,25 @@ export class NamingConventions {
         violationTypes.set(violation.type, count + 1);
       }
     }
-    
+
     // Generate recommendations based on most common violations
     const sortedViolations = Array.from(violationTypes.entries())
       .sort(([, a], [, b]) => b - a);
-    
+
     for (const [type, count] of sortedViolations.slice(0, 3)) {
       recommendations.push(
         `Focus on ${type} naming: ${count} violations found. ` +
-        `Follow ${this.getConventionDescription(type as NamingType)} convention.`
+        `Follow ${this.getConventionDescription(type as NamingType)} convention.`,
       );
     }
-    
+
     if (recommendations.length === 0) {
       recommendations.push('Great! No major naming convention issues found.');
     } else {
       recommendations.push('Consider setting up automated linting to catch naming issues early.');
       recommendations.push('Document project-specific naming conventions in a style guide.');
     }
-    
+
     return recommendations;
   }
 
@@ -546,13 +546,13 @@ export class NamingConventions {
       'type': 'PascalCase',
       'enum': 'PascalCase',
     };
-    
+
     return descriptions[type] || 'project-specific';
   }
 }
 
 // Type definitions for the naming system
-export type NamingType = 
+export type NamingType =
   | 'typescript-file' | 'test-file' | 'config-file' | 'doc-file'
   | 'variable' | 'function' | 'class' | 'interface' | 'type' | 'enum' | 'constant'
   | 'private-method' | 'private-field'
