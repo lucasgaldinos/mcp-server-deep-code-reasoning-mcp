@@ -1,206 +1,287 @@
 /**
- * Core strategy interface for different code analysis approaches
+ * @fileoverview Reasoning Strategy Pattern Interface
  * 
- * This interface defines the contract for all reasoning strategies,
- * enabling pluggable analysis approaches based on context and requirements.
+ * This module defines the Strategy pattern interface for different analysis
+ * approaches in the Deep Code Reasoning MCP Server. It provides a flexible
+ * framework for implementing various reasoning strategies such as quick
+ * analysis, deep analysis, performance optimization, and cross-system analysis.
+ * 
+ * Key features:
+ * - Strategy pattern for analysis approaches
+ * - Context-aware strategy selection
+ * - Performance and resource constraints handling
+ * - Extensible framework for new analysis types
+ * 
+ * @author Deep Code Reasoning MCP Server
+ * @version 1.0.0
+ * @since 2025-01-09
  */
 
-import { DeepAnalysisResult, CodeScope, Finding } from '../models/types.js';
+import { ILogContext } from '@utils/StructuredLogger.js';
 
 /**
- * Extended code context for strategy operations
+ * Analysis context for strategy execution
  */
-export interface CodeContext {
-  content?: string;
-  filePath?: string;
-  language?: string;
-  framework?: string;
-  scope?: CodeScope;
-  metadata?: Record<string, unknown>;
+export interface IAnalysisContext {
+  files: string[];
+  query: string;
+  timeConstraint?: number;
+  memoryConstraint?: number;
+  prioritizeSpeed?: boolean;
+  includePerformanceAnalysis?: boolean;
+  enableCrossSystemAnalysis?: boolean;
+  customParameters?: Record<string, any>;
+  correlationId?: string;
+  logContext?: ILogContext;
 }
 
 /**
- * Configuration options for analysis strategies
+ * Analysis result interface
  */
-export interface AnalysisOptions {
-  timeout?: number;
-  verbose?: boolean;
-  depth?: 'quick' | 'medium' | 'deep';
-  focusAreas?: string[];
-  includePerformance?: boolean;
-  includeSecurity?: boolean;
-  maxFindings?: number;
-  [key: string]: unknown;
-}
-
-/**
- * Unified analysis result interface
- */
-export interface AnalysisResult extends DeepAnalysisResult {
+export interface IAnalysisResult {
+  success: boolean;
+  analysis: string;
+  confidence: number;
+  executionTime: number;
+  memoryUsed: number;
   strategy: string;
-  context: {
-    filePath?: string;
-    language?: string;
-    framework?: string;
-  };
-  duration: number;
-  quickFindings?: Finding[];
+  metadata?: Record<string, any>;
+  warnings?: string[];
+  recommendations?: string[];
+  followUpSuggestions?: string[];
 }
 
-export interface ReasoningStrategy {
+/**
+ * Strategy capabilities metadata
+ */
+export interface IStrategyCapabilities {
+  name: string;
+  description: string;
+  supportedAnalysisTypes: string[];
+  minimumTimeConstraint?: number;
+  maximumFileCount?: number;
+  memoryRequirement?: number;
+  requiresExternalServices?: boolean;
+  strengthAreas: string[];
+  limitations?: string[];
+}
+
+/**
+ * Strategy performance metrics
+ */
+export interface IStrategyMetrics {
+  averageExecutionTime: number;
+  successRate: number;
+  averageConfidence: number;
+  memoryEfficiency: number;
+  totalExecutions: number;
+  lastUsed?: Date;
+}
+
+/**
+ * Reasoning Strategy Interface
+ * 
+ * Defines the contract for all analysis strategies in the system.
+ * Strategies implement different approaches to code analysis based on
+ * context, constraints, and requirements.
+ */
+export interface IReasoningStrategy {
   /**
-   * Unique identifier for this strategy
+   * Strategy identification and metadata
    */
   readonly name: string;
+  readonly version: string;
+  readonly capabilities: IStrategyCapabilities;
 
   /**
-   * Human-readable description of the strategy
-   */
-  readonly description: string;
-
-  /**
-   * Indicates if this strategy is suitable for real-time analysis
-   */
-  readonly isRealTime: boolean;
-
-  /**
-   * Expected analysis duration category
-   */
-  readonly complexity: 'quick' | 'medium' | 'deep';
-
-  /**
-   * Performs code analysis using this strategy's approach
+   * Execute analysis using this strategy
    * 
-   * @param context - The code context to analyze
-   * @param options - Analysis configuration options
-   * @returns Promise resolving to analysis results
+   * @param context - Analysis context with files, query, and constraints
+   * @returns Promise resolving to analysis result
    */
-  analyze(context: CodeContext, options?: AnalysisOptions): Promise<AnalysisResult>;
+  analyze(context: IAnalysisContext): Promise<IAnalysisResult>;
 
   /**
-   * Determines if this strategy is appropriate for the given context
+   * Check if this strategy can handle the given context
    * 
-   * @param context - The code context to evaluate
-   * @param options - Analysis configuration options
-   * @returns true if this strategy should be used
+   * @param context - Analysis context to evaluate
+   * @returns Suitability score (0-1, higher is better)
    */
-  canHandle(context: CodeContext, options?: AnalysisOptions): boolean;
+  canHandle(context: IAnalysisContext): Promise<number>;
 
   /**
-   * Gets estimated analysis time in milliseconds
+   * Estimate resource requirements for the given context
    * 
-   * @param context - The code context to analyze
-   * @returns Estimated duration
+   * @param context - Analysis context to evaluate
+   * @returns Estimated time (ms) and memory (bytes) requirements
    */
-  getEstimatedDuration(context: CodeContext): number;
+  estimateResources(context: IAnalysisContext): Promise<{
+    estimatedTime: number;
+    estimatedMemory: number;
+    confidence: number;
+  }>;
 
   /**
-   * Provides strategy-specific configuration options
-   * 
-   * @returns Configuration schema for this strategy
+   * Get current strategy metrics
    */
-  getConfigSchema(): Record<string, unknown>;
+  getMetrics(): IStrategyMetrics;
+
+  /**
+   * Update strategy configuration
+   * 
+   * @param config - Strategy-specific configuration
+   */
+  configure(config: Record<string, any>): void;
+
+  /**
+   * Prepare strategy for execution (optional)
+   * Called before analyze() to allow for setup
+   */
+  prepare?(context: IAnalysisContext): Promise<void>;
+
+  /**
+   * Cleanup after execution (optional)
+   * Called after analyze() to allow for cleanup
+   */
+  cleanup?(): Promise<void>;
 }
 
 /**
- * Base abstract class providing common strategy functionality
+ * Strategy selector interface for choosing optimal strategies
  */
-export abstract class BaseReasoningStrategy implements ReasoningStrategy {
+export interface IStrategySelector {
+  /**
+   * Select the best strategy for the given context
+   * 
+   * @param context - Analysis context
+   * @param availableStrategies - Available strategies to choose from
+   * @returns Selected strategy or null if none suitable
+   */
+  selectStrategy(
+    context: IAnalysisContext,
+    availableStrategies: IReasoningStrategy[]
+  ): Promise<IReasoningStrategy | null>;
+
+  /**
+   * Rank strategies by suitability for the given context
+   * 
+   * @param context - Analysis context
+   * @param availableStrategies - Available strategies to rank
+   * @returns Strategies ranked by suitability (best first)
+   */
+  rankStrategies(
+    context: IAnalysisContext,
+    availableStrategies: IReasoningStrategy[]
+  ): Promise<Array<{ strategy: IReasoningStrategy; score: number }>>;
+}
+
+/**
+ * Analysis types enumeration
+ */
+export enum AnalysisType {
+  QUICK_SCAN = 'quick_scan',
+  DEEP_ANALYSIS = 'deep_analysis',
+  PERFORMANCE_ANALYSIS = 'performance_analysis',
+  SECURITY_ANALYSIS = 'security_analysis',
+  CROSS_SYSTEM_ANALYSIS = 'cross_system_analysis',
+  EXECUTION_TRACE = 'execution_trace',
+  HYPOTHESIS_TEST = 'hypothesis_test',
+  CODE_QUALITY = 'code_quality',
+  ARCHITECTURE_REVIEW = 'architecture_review',
+  DOCUMENTATION_ANALYSIS = 'documentation_analysis',
+}
+
+/**
+ * Base strategy abstract class providing common functionality
+ */
+export abstract class BaseReasoningStrategy implements IReasoningStrategy {
+  protected metrics: IStrategyMetrics = {
+    averageExecutionTime: 0,
+    successRate: 0,
+    averageConfidence: 0,
+    memoryEfficiency: 0,
+    totalExecutions: 0,
+  };
+
+  protected configuration: Record<string, any> = {};
+
   abstract readonly name: string;
-  abstract readonly description: string;
-  abstract readonly isRealTime: boolean;
-  abstract readonly complexity: 'quick' | 'medium' | 'deep';
+  abstract readonly version: string;
+  abstract readonly capabilities: IStrategyCapabilities;
 
-  abstract analyze(context: CodeContext, options?: AnalysisOptions): Promise<AnalysisResult>;
+  abstract analyze(context: IAnalysisContext): Promise<IAnalysisResult>;
+  abstract canHandle(context: IAnalysisContext): Promise<number>;
 
-  /**
-   * Default implementation for context handling
-   * Can be overridden by specific strategies
-   */
-  canHandle(context: CodeContext, options?: AnalysisOptions): boolean {
-    // Basic validation - ensure we have code to analyze
-    return !!(context.content || context.filePath);
-  }
+  async estimateResources(context: IAnalysisContext): Promise<{
+    estimatedTime: number;
+    estimatedMemory: number;
+    confidence: number;
+  }> {
+    // Default implementation based on file count and historical metrics
+    const fileCount = context.files.length;
+    const baseTime = this.metrics.averageExecutionTime || 5000;
+    const baseMemory = 50 * 1024 * 1024; // 50MB base
 
-  /**
-   * Default duration estimation based on complexity
-   */
-  getEstimatedDuration(context: CodeContext): number {
-    const baseTime = this.complexity === 'quick' ? 1000 :
-                    this.complexity === 'medium' ? 5000 : 15000;
-    
-    // Adjust based on content size
-    const contentLength = context.content?.length || 0;
-    const sizeMultiplier = Math.max(1, contentLength / 10000);
-    
-    return Math.round(baseTime * sizeMultiplier);
-  }
-
-  /**
-   * Default configuration schema
-   */
-  getConfigSchema(): Record<string, unknown> {
     return {
-      timeout: {
-        type: 'number',
-        default: this.getEstimatedDuration({ content: '' }) * 2,
-        description: 'Maximum analysis time in milliseconds'
-      },
-      verbose: {
-        type: 'boolean',
-        default: false,
-        description: 'Enable verbose output'
-      }
+      estimatedTime: Math.max(baseTime * Math.log(fileCount + 1), 1000),
+      estimatedMemory: baseMemory * Math.log(fileCount + 1),
+      confidence: this.metrics.totalExecutions > 0 ? 0.8 : 0.5,
     };
   }
 
-  /**
-   * Utility method for validating context
-   */
-  protected validateContext(context: CodeContext): void {
-    if (!context) {
-      throw new Error('CodeContext is required');
-    }
-    
-    if (!context.content && !context.filePath) {
-      throw new Error('Either content or filePath must be provided');
-    }
+  getMetrics(): IStrategyMetrics {
+    return { ...this.metrics };
+  }
+
+  configure(config: Record<string, any>): void {
+    this.configuration = { ...this.configuration, ...config };
   }
 
   /**
-   * Utility method for creating basic analysis results
+   * Update metrics after execution
    */
-  protected createBaseResult(context: CodeContext, analysisType: string): Partial<AnalysisResult> {
-    return {
+  protected updateMetrics(result: IAnalysisResult): void {
+    const totalExec = this.metrics.totalExecutions;
+    
+    // Update averages using incremental calculation
+    this.metrics.averageExecutionTime = 
+      (this.metrics.averageExecutionTime * totalExec + result.executionTime) / (totalExec + 1);
+    
+    this.metrics.averageConfidence = 
+      (this.metrics.averageConfidence * totalExec + result.confidence) / (totalExec + 1);
+    
+    this.metrics.successRate = 
+      (this.metrics.successRate * totalExec + (result.success ? 1 : 0)) / (totalExec + 1);
+    
+    this.metrics.memoryEfficiency = 
+      (this.metrics.memoryEfficiency * totalExec + (1 / (result.memoryUsed + 1))) / (totalExec + 1);
+    
+    this.metrics.totalExecutions++;
+    this.metrics.lastUsed = new Date();
+  }
+
+  /**
+   * Helper method to create analysis result
+   */
+  protected createResult(
+    success: boolean,
+    analysis: string,
+    confidence: number,
+    executionTime: number,
+    memoryUsed: number,
+    metadata?: Record<string, any>
+  ): IAnalysisResult {
+    const result: IAnalysisResult = {
+      success,
+      analysis,
+      confidence,
+      executionTime,
+      memoryUsed,
       strategy: this.name,
-      context: {
-        filePath: context.filePath,
-        language: context.language,
-        framework: context.framework
-      },
-      duration: 0, // Will be updated by actual implementation
-      metadata: {
-        analysisType,
-        estimatedDuration: this.getEstimatedDuration(context),
-        strategy: this.name
-      },
-      status: 'success' as const,
-      findings: {
-        rootCauses: [],
-        executionPaths: [],
-        performanceBottlenecks: [],
-        crossSystemImpacts: []
-      },
-      recommendations: {
-        immediateActions: [],
-        investigationNextSteps: [],
-        codeChangesNeeded: []
-      },
-      enrichedContext: {
-        newInsights: [],
-        validatedHypotheses: [],
-        ruledOutApproaches: []
-      }
+      metadata,
     };
+
+    this.updateMetrics(result);
+    return result;
   }
 }

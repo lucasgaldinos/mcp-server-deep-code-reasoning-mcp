@@ -1,6 +1,7 @@
 # Agent Guidelines for Deep Code Reasoning MCP
 
 ## Build/Test/Lint Commands
+
 - `npm run build` - Build TypeScript to dist/
 - `npm run dev` - Watch mode development
 - `npm test` - Run Jest tests with ES module support
@@ -9,6 +10,7 @@
 - Single test: `npm test -- --testNamePattern="specific test name"`
 
 ## Architecture
+
 - **MCP Server**: Bridges Claude Code with Gemini 2.5 Pro for complex code analysis
 - **Core**: src/index.ts - Main MCP server with 10 analysis tools
 - **Analyzers**: src/analyzers/DeepCodeReasonerV2.js - Gemini integration
@@ -17,6 +19,7 @@
 - **Services**: Multi-model workflow routing (Claude→Gemini escalation)
 
 ## Code Style
+
 - **Imports**: ES modules (.js extensions required), no default imports mixing
 - **Types**: Strict TypeScript, Zod validation for API parameters
 - **Naming**: snake_case for API parameters, camelCase for internal code

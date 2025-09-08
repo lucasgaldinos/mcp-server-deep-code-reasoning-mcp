@@ -4,6 +4,7 @@ export default {
 	roots: ["<rootDir>/src"],
 	testMatch: ["**/__tests__/**/*.test.ts", "**/?(*.)+(spec|test).ts"],
 	testPathIgnorePatterns: ["/node_modules/", "/__tests__/mocks/"],
+	setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
 	transform: {
 		"^.+\\.ts$": [
 			"ts-jest",
