@@ -2,6 +2,13 @@ export default {
 	preset: "ts-jest/presets/default-esm",
 	testEnvironment: "node",
 	roots: ["<rootDir>/src"],
+	globals: {
+		"ts-jest": {
+			useESM: true,
+		},
+	},
+	// Enable jest globals (describe, it, expect, jest, etc.)
+	injectGlobals: true,
 	testMatch: ["**/__tests__/**/*.test.ts", "**/?(*.)+(spec|test).ts"],
 	testPathIgnorePatterns: ["/node_modules/", "/__tests__/mocks/"],
 	setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],

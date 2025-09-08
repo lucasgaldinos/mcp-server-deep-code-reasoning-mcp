@@ -1,10 +1,10 @@
 /**
  * @fileoverview Quick Analysis Strategy (Simplified)
- * 
+ *
  * This is a simplified version of the quick analysis strategy to resolve
  * TypeScript compatibility issues. The full implementation requires
  * proper interface definitions and base classes.
- * 
+ *
  * @author Deep Code Reasoning MCP Server
  * @version 1.0.0
  * @since 2025-01-09
@@ -28,7 +28,7 @@ export class QuickAnalysisStrategy implements IReasoningStrategy {
     memoryRequirement: 50 * 1024 * 1024, // 50MB
     requiresExternalServices: false,
     strengthAreas: ['fast feedback', 'simple queries', 'quick insights'],
-    limitations: ['shallow analysis', 'limited complexity handling']
+    limitations: ['shallow analysis', 'limited complexity handling'],
   };
 
   private logger = createLogger('QuickAnalysisStrategy');
@@ -38,21 +38,21 @@ export class QuickAnalysisStrategy implements IReasoningStrategy {
     averageConfidence: 0.7,
     memoryEfficiency: 0.9,
     totalExecutions: 0,
-    lastUsed: undefined
+    lastUsed: undefined,
   };
 
   private config: Record<string, any> = {};
-  
+
   /**
    * Perform quick analysis using this strategy
    */
   async analyze(context: IAnalysisContext): Promise<IAnalysisResult> {
     const startTime = Date.now();
-    this.logger.info('Performing quick analysis', { 
-      query: context.query, 
-      fileCount: context.files.length 
+    this.logger.info('Performing quick analysis', {
+      query: context.query,
+      fileCount: context.files.length,
     });
-    
+
     try {
       // Check if context is suitable
       const suitability = await this.canHandle(context);
@@ -64,17 +64,17 @@ export class QuickAnalysisStrategy implements IReasoningStrategy {
           executionTime: Date.now() - startTime,
           memoryUsed: 0,
           strategy: this.name,
-          warnings: ['Context too complex for quick analysis']
+          warnings: ['Context too complex for quick analysis'],
         };
       }
-      
+
       // Simulate quick analysis
       await new Promise(resolve => setTimeout(resolve, 50));
-      
+
       // Update metrics
       this.metrics.totalExecutions++;
       this.metrics.lastUsed = new Date();
-      
+
       return {
         success: true,
         analysis: 'Quick analysis result from Gemini',
@@ -84,8 +84,8 @@ export class QuickAnalysisStrategy implements IReasoningStrategy {
         strategy: this.name,
         metadata: {
           analysisType: 'quick',
-          filesAnalyzed: context.files.length
-        }
+          filesAnalyzed: context.files.length,
+        },
       };
     } catch (error) {
       return {
@@ -95,30 +95,30 @@ export class QuickAnalysisStrategy implements IReasoningStrategy {
         executionTime: Date.now() - startTime,
         memoryUsed: 0,
         strategy: this.name,
-        warnings: ['Analysis failed due to error']
+        warnings: ['Analysis failed due to error'],
       };
     }
   }
-  
+
   /**
    * Check if this strategy can handle the given context
    */
   async canHandle(context: IAnalysisContext): Promise<number> {
     // Prefer simple, quick queries
     const quickKeywords = ['quick', 'fast', 'simple', 'what', 'where', 'how'];
-    const hasQuickKeywords = quickKeywords.some(keyword => 
-      context.query.toLowerCase().includes(keyword)
+    const hasQuickKeywords = quickKeywords.some(keyword =>
+      context.query.toLowerCase().includes(keyword),
     );
-    
+
     // Prefer shorter queries for quick analysis
     const isShortQuery = context.query.length < 100;
     const hasFewFiles = context.files.length <= 10;
-    
+
     let score = 0.3; // Base score
     if (hasQuickKeywords) score += 0.3;
     if (isShortQuery) score += 0.2;
     if (hasFewFiles) score += 0.2;
-    
+
     return Math.min(score, 1.0);
   }
 
@@ -134,14 +134,14 @@ export class QuickAnalysisStrategy implements IReasoningStrategy {
     const timePerFile = 500; // 0.5 seconds per file
     const baseMemory = 20 * 1024 * 1024; // 20MB base
     const memoryPerFile = 2 * 1024 * 1024; // 2MB per file
-    
+
     const estimatedTime = baseTime + (context.files.length * timePerFile);
     const estimatedMemory = baseMemory + (context.files.length * memoryPerFile);
-    
+
     return {
       estimatedTime,
       estimatedMemory,
-      confidence: 0.9
+      confidence: 0.9,
     };
   }
 
@@ -153,16 +153,23 @@ export class QuickAnalysisStrategy implements IReasoningStrategy {
   }
 
   /**
+   * Configure strategy with provided options
+   */
+  configure(options: Record<string, any>): void {
+    this.config = { ...this.config, ...options };
+  }
+
+  /**
    * Update strategy configuration
    */
-  configure(config: Record<string, any>): void {
-    this.config = { ...this.config, ...config };
+  updateConfig(_context: Record<string, any>): void {
+    this.config = { ...this.config, ..._context };
   }
 
   /**
    * Optional: Prepare strategy for execution
    */
-  async prepare?(context: IAnalysisContext): Promise<void> {
+  async prepare(context: IAnalysisContext): Promise<void> {
     // Optional preparation steps
     return Promise.resolve();
   }
@@ -170,7 +177,7 @@ export class QuickAnalysisStrategy implements IReasoningStrategy {
   /**
    * Optional: Cleanup after execution
    */
-  async cleanup?(): Promise<void> {
+  async cleanup(): Promise<void> {
     // Optional cleanup steps
     return Promise.resolve();
   }

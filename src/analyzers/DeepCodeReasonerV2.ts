@@ -11,6 +11,8 @@ import { SecureCodeReader } from '@utils/SecureCodeReader.js';
 import { ErrorClassifier } from '@utils/ErrorClassifier.js';
 import { ConversationLockedError, SessionNotFoundError } from '@errors/index.js';
 import { HypothesisTournamentService } from '@services/HypothesisTournamentService.js';
+import { StrategyManager } from '../strategies/StrategyManager.js';
+import type { IAnalysisContext, IAnalysisResult } from '../strategies/ReasoningStrategy.js';
 
 export class DeepCodeReasonerV2 {
   private geminiService: GeminiService;
@@ -18,6 +20,7 @@ export class DeepCodeReasonerV2 {
   private conversationManager: ConversationManager;
   private codeReader: SecureCodeReader;
   private tournamentService: HypothesisTournamentService;
+  private strategyManager: StrategyManager;
   private geminiApiKey: string;
 
   constructor(geminiApiKey: string) {
@@ -27,6 +30,40 @@ export class DeepCodeReasonerV2 {
     this.conversationManager = new ConversationManager();
     this.codeReader = new SecureCodeReader();
     this.tournamentService = new HypothesisTournamentService(geminiApiKey);
+    this.strategyManager = new StrategyManager();
+  }
+
+  /**
+   * Analyze code using strategy pattern approach
+   */
+  async analyzeWithStrategy(
+    files: string[],
+    query: string,
+    options: {
+      timeConstraint?: number;
+      memoryConstraint?: number;
+      prioritizeSpeed?: boolean;
+      includePerformanceAnalysis?: boolean;
+      enableCrossSystemAnalysis?: boolean;
+      correlationId?: string;
+    } = {},
+  ): Promise<IAnalysisResult> {
+    const context: IAnalysisContext = {
+      files,
+      query,
+      timeConstraint: options.timeConstraint,
+      memoryConstraint: options.memoryConstraint,
+      prioritizeSpeed: options.prioritizeSpeed,
+      includePerformanceAnalysis: options.includePerformanceAnalysis,
+      enableCrossSystemAnalysis: options.enableCrossSystemAnalysis,
+      correlationId: options.correlationId || `analysis-${Date.now()}`,
+      logContext: {
+        operation: 'strategy-analysis',
+        component: 'DeepCodeReasonerV2',
+      },
+    };
+
+    return await this.strategyManager.analyzeWithBestStrategy(context);
   }
 
   async escalateFromClaudeCode(

@@ -1,10 +1,10 @@
 /**
  * @fileoverview Deep Analysis Strategy (Simplified)
- * 
+ *
  * This is a simplified version of the deep analysis strategy to resolve
  * TypeScript compatibility issues. The full implementation requires
  * proper interface definitions and base classes.
- * 
+ *
  * @author Deep Code Reasoning MCP Server
  * @version 1.0.0
  * @since 2025-01-09
@@ -27,7 +27,7 @@ export class DeepAnalysisStrategy implements IReasoningStrategy {
     memoryRequirement: 512 * 1024 * 1024, // 512MB
     requiresExternalServices: true,
     strengthAreas: ['complex analysis', 'system architecture', 'cross-component investigation'],
-    limitations: ['requires more time', 'higher memory usage']
+    limitations: ['requires more time', 'higher memory usage'],
   };
 
   private metrics: IStrategyMetrics = {
@@ -36,17 +36,17 @@ export class DeepAnalysisStrategy implements IReasoningStrategy {
     averageConfidence: 0.9,
     memoryEfficiency: 0.8,
     totalExecutions: 0,
-    lastUsed: undefined
+    lastUsed: undefined,
   };
 
   private config: Record<string, any> = {};
-  
+
   /**
    * Perform deep analysis using this strategy
    */
   async analyze(context: IAnalysisContext): Promise<IAnalysisResult> {
     const startTime = Date.now();
-    
+
     try {
       // Check if context is suitable
       const suitability = await this.canHandle(context);
@@ -58,13 +58,13 @@ export class DeepAnalysisStrategy implements IReasoningStrategy {
           executionTime: Date.now() - startTime,
           memoryUsed: 0,
           strategy: this.name,
-          warnings: ['Context not suitable for deep analysis']
+          warnings: ['Context not suitable for deep analysis'],
         };
       }
-      
+
       // Simulate analysis
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       return {
         success: true,
         analysis: 'Deep analysis result from Gemini',
@@ -74,8 +74,8 @@ export class DeepAnalysisStrategy implements IReasoningStrategy {
         strategy: this.name,
         metadata: {
           analysisType: 'deep',
-          filesAnalyzed: context.files.length
-        }
+          filesAnalyzed: context.files.length,
+        },
       };
     } catch (error) {
       return {
@@ -85,25 +85,25 @@ export class DeepAnalysisStrategy implements IReasoningStrategy {
         executionTime: Date.now() - startTime,
         memoryUsed: 0,
         strategy: this.name,
-        warnings: ['Analysis failed due to error']
+        warnings: ['Analysis failed due to error'],
       };
     }
   }
-  
+
   /**
    * Check if this strategy can handle the given context
    */
   async canHandle(context: IAnalysisContext): Promise<number> {
     // Prefer queries asking for comprehensive analysis
     const deepKeywords = ['comprehensive', 'deep', 'architecture', 'system', 'cross', 'impact', 'holistic'];
-    const hasDeepKeywords = deepKeywords.some(keyword => 
-      context.query.toLowerCase().includes(keyword)
+    const hasDeepKeywords = deepKeywords.some(keyword =>
+      context.query.toLowerCase().includes(keyword),
     );
-    
+
     // Prefer contexts with multiple files
     const fileScore = Math.min(context.files.length / 10, 0.3);
     const keywordScore = hasDeepKeywords ? 0.5 : 0.2;
-    
+
     return Math.min(fileScore + keywordScore, 1.0);
   }
 
@@ -119,14 +119,14 @@ export class DeepAnalysisStrategy implements IReasoningStrategy {
     const timePerFile = 2000; // 2 seconds per file
     const baseMemory = 100 * 1024 * 1024; // 100MB base
     const memoryPerFile = 5 * 1024 * 1024; // 5MB per file
-    
+
     const estimatedTime = baseTime + (context.files.length * timePerFile);
     const estimatedMemory = baseMemory + (context.files.length * memoryPerFile);
-    
+
     return {
       estimatedTime,
       estimatedMemory,
-      confidence: 0.8
+      confidence: 0.8,
     };
   }
 
@@ -140,14 +140,21 @@ export class DeepAnalysisStrategy implements IReasoningStrategy {
   /**
    * Update strategy configuration
    */
-  configure(config: Record<string, any>): void {
-    this.config = { ...this.config, ...config };
+  updateConfig(_context: Record<string, any>): void {
+    // Update configuration - placeholder for future use
+  }
+
+  /**
+   * Configure strategy with provided options
+   */
+  configure(options: Record<string, any>): void {
+    this.config = { ...this.config, ...options };
   }
 
   /**
    * Optional: Prepare strategy for execution
    */
-  async prepare?(context: IAnalysisContext): Promise<void> {
+  async prepare(context: IAnalysisContext): Promise<void> {
     // Optional preparation steps
     return Promise.resolve();
   }
@@ -155,7 +162,7 @@ export class DeepAnalysisStrategy implements IReasoningStrategy {
   /**
    * Optional: Cleanup after execution
    */
-  async cleanup?(): Promise<void> {
+  async cleanup(): Promise<void> {
     // Optional cleanup steps
     return Promise.resolve();
   }
