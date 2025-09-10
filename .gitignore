@@ -22,17 +22,19 @@ build/
 *.swo
 *~
 .DS_Store
+.github/
 
 # Testing
 coverage/
 .nyc_output/
 *.lcov
-*.knowledge_base
+*
+
 # Logs
 logs/
 *.log
 
-*.knowledge_base
+
 
 # Runtime data
 pids/
