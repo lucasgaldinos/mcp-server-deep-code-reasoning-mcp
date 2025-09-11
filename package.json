@@ -21,6 +21,8 @@
 		"quality:fix": "npm run lint:fix && npm run format && npm run lint:md:fix",
 		"typecheck": "tsc --noEmit",
 		"validate-structure": "tsx scripts/development/validate-structure.ts",
+		"security-audit": "tsx scripts/security/run-security-audit.ts",
+		"performance-analysis": "tsx scripts/performance/run-performance-analysis.ts",
 		"prepare": "husky",
 		"docker:build": "tsx scripts/deployment/docker-build.ts",
 		"docker:local": "tsx scripts/deployment/deploy.ts local",
