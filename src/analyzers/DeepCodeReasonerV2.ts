@@ -608,4 +608,16 @@ export class DeepCodeReasonerV2 {
       throw error;
     }
   }
+
+  /**
+   * Cleanup resources and destroy instance
+   */
+  destroy(): void {
+    // Cleanup conversation manager timers
+    if (this.conversationManager && typeof this.conversationManager.destroy === 'function') {
+      this.conversationManager.destroy();
+    }
+
+    // No other cleanup needed for current implementation
+  }
 }

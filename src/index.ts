@@ -113,9 +113,9 @@ memoryProtocol.initialize().catch((error) => {
  * @type {z.ZodObject}
  */
 const ClaudeCodeContextSchema = z.object({
-  attemptedApproaches: z.array(z.string()).describe('What Claude Code already tried'),
-  partialFindings: z.array(z.any()).describe('Any findings Claude Code discovered'),
-  stuckPoints: z.array(z.string()).describe('Description of where Claude Code got stuck'),
+  attemptedApproaches: z.array(z.string()).describe('What VS Code already tried'),
+  partialFindings: z.array(z.any()).describe('Any findings VS Code discovered'),
+  stuckPoints: z.array(z.string()).describe('Description of where VS Code got stuck'),
   focusArea: z.object({
     files: z.array(z.string()).describe('Files to analyze'),
     entryPoints: z.array(z.any()).optional().describe('Specific functions/methods to start from'),
@@ -262,7 +262,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: 'escalate_analysis',
-        description: 'Hand off complex analysis to Gemini when Claude Code hits reasoning limits. Gemini will perform deep semantic analysis beyond syntactic patterns.',
+        description: 'Hand off complex analysis to Gemini when VS Code hits reasoning limits. Gemini will perform deep semantic analysis beyond syntactic patterns.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -272,16 +272,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 attemptedApproaches: {
                   type: 'array',
                   items: { type: 'string' },
-                  description: 'What Claude Code already tried',
+                  description: 'What VS Code already tried',
                 },
                 partialFindings: {
                   type: 'array',
-                  description: 'Any findings Claude Code discovered',
+                  items: { type: 'object' },
+                  description: 'Any findings VS Code discovered',
                 },
                 stuckPoints: {
                   type: 'array',
                   items: { type: 'string' },
-                  description: 'Description of where Claude Code got stuck',
+                  description: 'Description of where VS Code got stuck',
                 },
                 focusArea: {
                   type: 'object',
@@ -293,6 +294,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                     },
                     entryPoints: {
                       type: 'array',
+                      items: { type: 'object' },
                       description: 'Specific functions/methods to start from',
                     },
                     serviceNames: {
@@ -358,7 +360,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: 'object',
               properties: {
                 files: { type: 'array', items: { type: 'string' } },
-                entryPoints: { type: 'array' },
+                entryPoints: { type: 'array', items: { type: 'string' } },
               },
               required: ['files'],
             },
@@ -428,16 +430,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 attemptedApproaches: {
                   type: 'array',
                   items: { type: 'string' },
-                  description: 'What Claude Code already tried',
+                  description: 'What VS Code already tried',
                 },
                 partialFindings: {
                   type: 'array',
-                  description: 'Any findings Claude Code discovered',
+                  items: { type: 'object' },
+                  description: 'Any findings VS Code discovered',
                 },
                 stuckPoints: {
                   type: 'array',
                   items: { type: 'string' },
-                  description: 'Description of where Claude Code got stuck',
+                  description: 'Description of where VS Code got stuck',
                 },
                 focusArea: {
                   type: 'object',
@@ -449,6 +452,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                     },
                     entryPoints: {
                       type: 'array',
+                      items: { type: 'string' },
                       description: 'Specific functions/methods to start from',
                     },
                     serviceNames: {
@@ -542,16 +546,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 attemptedApproaches: {
                   type: 'array',
                   items: { type: 'string' },
-                  description: 'What Claude Code already tried',
+                  description: 'What VS Code already tried',
                 },
                 partialFindings: {
                   type: 'array',
-                  description: 'Any findings Claude Code discovered',
+                  items: { type: 'object' },
+                  description: 'Any findings VS Code discovered',
                 },
                 stuckPoints: {
                   type: 'array',
                   items: { type: 'string' },
-                  description: 'Description of where Claude Code got stuck',
+                  description: 'Description of where VS Code got stuck',
                 },
                 focusArea: {
                   type: 'object',
@@ -563,6 +568,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                     },
                     entryPoints: {
                       type: 'array',
+                      items: { type: 'string' },
                       description: 'Specific functions/methods to start from',
                     },
                     serviceNames: {

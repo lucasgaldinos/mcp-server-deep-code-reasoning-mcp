@@ -55,7 +55,7 @@ export class InputValidator {
   // Claude context schema
   static readonly ClaudeContextSchema = z.object({
     attempted_approaches: this.SafeStringArray,
-    partial_findings: z.array(z.any()).max(50), // Will be validated separately
+    partial_findings: z.array(z.unknown()).max(50), // Will be validated separately
     stuck_description: this.SafeString,
     code_scope: this.CodeScopeSchema,
   });

@@ -1,9 +1,9 @@
 ---
 title: Deep Code Reasoning MCP Server
-description: An MCP server that pairs Claude Code with Google's Gemini AI for complementary code analysis
+description: Open-source MCP server enabling VS Code to leverage Gemini AI for sophisticated code analysis
 status: published
 updated: 2025-01-09
-tags: [mcp-server, claude, gemini, code-analysis, ai]
+tags: [mcp-server, vscode, gemini, code-analysis, open-source]
 version: 0.1.0
 license: MIT
 ---
@@ -14,32 +14,111 @@ license: MIT
 [![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.com)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org)
 
-An MCP server that pairs Claude Code with Google's Gemini AI for complementary code analysis. This server enables a multi-model workflow where Claude Code handles tight terminal integration and multi-file refactoring, while Gemini leverages its massive context window (1M tokens) and code execution capabilities for distributed system debugging and long-trace analysis.
+An **open-source Model Context Protocol (MCP) server** that enables VS Code to leverage Google's Gemini AI for deep code reasoning. This is an alternative version of [haasonsaas/deep-code-reasoning-mcp](https://github.com/haasonsaas/deep-code-reasoning-mcp).
 
-## Core Value
+## Core Value Proposition
 
-Both Claude and Gemini can handle deep semantic reasoning and distributed system bugs. This server enables an intelligent routing strategy where:
+This MCP server provides sophisticated code analysis capabilities through intelligent multi-model collaboration:
 
-- **Claude Code** excels at local-context operations, incremental patches, and CLI-native workflows
-- **Gemini 2.5 Pro** shines with huge-context sweeps, synthetic test execution, and analyzing failures that span logs + traces + code
+- **VS Code** excels at providing development context, editor integration, and seamless workflow integration.
+- **Copilot** is a multimodel capable tool.
+- **Gemini 2.5 Pro** leverages its massive 1M token context window for analyzing large codebases, complex execution traces, and distributed system behaviors
 
-The "escalation" model treats LLMs like heterogeneous microservices - route to the one that's most capable for each sub-task.
+**Key Improvements Over Original**:
 
-## Features
+- 🏗️ **Better Software Architecture**: Dependency injection, service-oriented patterns, comprehensive error handling
+- 📊 **Advanced Analysis**: Hypothesis tournaments, conversational AI analysis, cross-system impact modeling  
+- 🔒 **Production Ready**: Secure deployment, Docker support, comprehensive monitoring and logging
+- 📚 **Complete Documentation**: API docs, architecture guides, usage examples, and integration tutorials
 
-- **Gemini 2.5 Pro Preview**: Uses Google's latest Gemini 2.5 Pro Preview (05-06) model with 1M token context window
-- **Conversational Analysis**: NEW! AI-to-AI dialogues between Claude and Gemini for iterative problem-solving
-- **Execution Flow Tracing**: Understands data flow and state transformations, not just function calls
-- **Cross-System Impact Analysis**: Models how changes propagate across service boundaries
-- **Performance Modeling**: Identifies N+1 patterns, memory leaks, and algorithmic bottlenecks
-- **Hypothesis Testing**: Tests theories about code behavior with evidence-based validation
-- **Long Context Support**: Leverages Gemini 2.5 Pro Preview's 1M token context for analyzing large codebases
+## MCP Server Tools
 
-## Prerequisites
+This server provides **13 specialized analysis tools** for VS Code:
 
-- Node.js 18 or later
-- A Google Cloud account with Gemini API access
-- Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+### 🔧 Core Analysis Tools
+
+- `escalate_analysis` - Hand off complex analysis to Gemini's 1M token context  
+- `trace_execution_path` - Deep execution flow analysis with data transformations
+- `cross_system_impact` - Analyze breaking changes across service boundaries
+- `performance_bottleneck` - Detect N+1 patterns, memory leaks, algorithmic issues
+- `hypothesis_test` - Evidence-based validation of theories about code behavior
+
+### 💬 Conversational Analysis Tools
+
+- `start_conversation` - Begin multi-turn AI-to-AI dialogue for complex problems
+- `continue_conversation` - Progressive discovery through iterative analysis
+- `finalize_conversation` - Synthesize findings into structured recommendations
+- `get_conversation_status` - Monitor analysis progress and session state
+
+### 🏆 Advanced Analysis Tools
+
+- `run_hypothesis_tournament` - Competitive testing of multiple theories simultaneously
+- `health_check` - System health validation and diagnostics
+- `health_summary` - Comprehensive system status and metrics
+
+### 🎯 Analysis Categories
+
+- **Execution Tracing**: Follow code execution paths, data flows, and state changes
+- **Performance Analysis**: Identify bottlenecks, complexity issues, and optimization opportunities  
+- **System Boundaries**: Model cross-service impacts and breaking changes
+- **Hypothesis Testing**: Evidence-based validation with competitive analysis tournaments
+
+## 🚀 Quick Start with VS Code
+
+### Prerequisites
+
+- **VS Code**: Version 1.99+ (with MCP support)
+- **Node.js**: Version 18+
+- **Gemini API Key**: Get from [Google AI Studio](https://aistudio.google.com/app/apikey)
+
+### Installation
+
+```bash
+# Clone and build
+git clone https://github.com/lucasgaldinos/mcp-server-deep-code-reasoning-mcp.git
+cd mcp-server-deep-code-reasoning-mcp
+npm install && npm run build
+
+# Open in VS Code
+code .
+```
+
+### VS Code Configuration
+
+The repository includes a pre-configured `.vscode/mcp.json` file:
+
+```json
+{
+  "servers": {
+    "deep-code-reasoning": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "env": {
+        "GEMINI_API_KEY": "${input:geminiApiKey}"
+      }
+    }
+  }
+}
+```
+
+### First Use
+
+1. Open VS Code Chat (`Ctrl+Shift+I` or `Cmd+Shift+I`)
+2. Type: `@workspace analyze this codebase for performance issues`
+3. When prompted, enter your Gemini API key
+4. Start analyzing! 🎉
+
+**📖 Need detailed setup instructions?** See the [VS Code Setup Guide](VSCODE_SETUP_GUIDE.md)
+
+## ✨ What Makes This Different
+
+This isn't just another code analysis tool. It's an **intelligent analysis orchestrator** that bridges different AI capabilities:
+
+- **VS Code Integration**: Native MCP support means seamless workflow integration
+- **Multi-Model Strategy**: VS Code handles local context, Gemini handles massive analysis  
+- **Conversational Analysis**: AI-to-AI dialogue for iterative problem solving
+- **Hypothesis Tournaments**: Competitive testing of multiple theories in parallel
+- **Production Ready**: Enterprise-grade architecture with monitoring and security
 
 ## Key Dependencies
 
@@ -50,39 +129,71 @@ The "escalation" model treats LLMs like heterogeneous microservices - route to t
 
 ## Installation
 
-### Quick Install for Cursor
+### VS Code Integration
 
-[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=deep-code-reasoning&config=eyJjb21tYW5kIjoibm9kZSIsImFyZ3MiOlsiL3BhdGgvdG8vZGVlcC1jb2RlLXJlYXNvbmluZy1tY3AvZGlzdC9pbmRleC5qcyJdLCJlbnYiOnsiR0VNSU5JX0FQSV9LRVkiOiJ5b3VyLWdlbWluaS1hcGkta2V5In19)
-
-*Note: After installation, you'll need to update the file path to your actual installation directory and set your `GEMINI_API_KEY`.*
+This MCP server is designed to work with VS Code through MCP Copilot's MCP processor. Install the server and configure it with your preferred VS Code MCP extension.
 
 ### Manual Installation
 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/Haasonsaas/deep-code-reasoning-mcp.git
-cd deep-code-reasoning-mcp
+git clone https://github.com/lucasgaldinos/mcp-server-deep-code-reasoning-mcp.git
+cd mcp-server-deep-code-reasoning-mcp
 ```
 
-2. Install dependencies:
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-3. Set up your Gemini API key:
+1. Set up your Gemini API key:
 
 ```bash
 cp .env.example .env
 # Edit .env and add your GEMINI_API_KEY
 ```
 
-4. Build the project:
+1. Build the project:
 
 ```bash
 npm run build
 ```
+
+## 🔐 Secure Deployment
+
+### Quick Start (Recommended)
+
+```bash
+# Interactive setup with secure API key prompting
+./setup.sh
+```
+
+### Deployment Options
+
+Choose your deployment method:
+
+```bash
+# Local development
+./scripts/secure-deploy.sh local
+
+# Docker container (recommended)
+./scripts/secure-deploy.sh docker
+
+# Production deployment with Kubernetes
+./scripts/secure-deploy.sh production v1.0.0
+```
+
+### Security Features
+
+- 🔒 **API key never exposed** in logs or build history
+- 🎯 **Interactive secure prompting** for sensitive data
+- 🐳 **Docker support** with secure environment handling
+- ☸️ **Kubernetes manifests** with proper secrets management
+- 📋 **Environment templates** for easy configuration
+
+For detailed deployment instructions, see [SECURE_DEPLOYMENT.md](SECURE_DEPLOYMENT.md).
 
 ## Configuration
 
@@ -90,9 +201,11 @@ npm run build
 
 - `GEMINI_API_KEY` (required): Your Google Gemini API key
 
-### Claude Desktop Configuration
+### VS Code Configuration
 
-Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+This MCP server is designed to integrate with VS Code through **Copilot's MCP**. Configuration details depend on the specific VS Code extension used to interface with MCP servers.
+
+**Example VS Code MCP Configuration**:
 
 ```json
 {
@@ -110,14 +223,15 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
 
 ## How It Works
 
-1. **Claude Code performs initial analysis** using its strengths in multi-file refactoring and test-driven loops
-2. **When beneficial, Claude escalates to this MCP server** - particularly for:
-   - Analyzing gigantic log/trace dumps that exceed Claude's context
-   - Running iterative hypothesis testing with code execution
-   - Correlating failures across many microservices
-3. **Server prepares comprehensive context** including code, logs, and traces
-4. **Gemini analyzes with its 1M-token context** and visible "thinking" traces
-5. **Results returned to Claude Code** for implementation of fixes
+1. **Copilot model performs initial analysis** with this MCP server through the Model Context Protocol
+2. **When VS Code Copilot encounters complex analysis scenarios**, it can escalate to this server, particularly for:
+   - Analyzing large codebases that exceed typical analysis capabilities
+   - Deep execution tracing across multiple services
+   - Performance bottleneck detection with algorithmic complexity analysis
+   - Hypothesis testing with evidence-based validation
+3. **Server leverages Gemini's 1M-token context** for comprehensive analysis
+4. **Results returned as structured data** for VS Code to interpret and display
+5. **Conversational analysis enables iterative refinement** through multi-turn dialogues
 
 ## Available Tools
 
@@ -125,11 +239,11 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
 
 ### Conversational Analysis Tools
 
-The server now includes AI-to-AI conversational tools that enable Claude and Gemini to engage in multi-turn dialogues for complex analysis:
+The server includes conversational analysis tools that enable VS Code extensions to engage in multi-turn dialogues with **Gemini 2.5 pro and other AI available at github'scopilot catalog, Though claude is recommended** for complex analysis:
 
 #### start_conversation
 
-Initiates a conversational analysis session between Claude and Gemini.
+Initiates a conversational analysis session with Gemini for VS Code.
 
 ```typescript
 {

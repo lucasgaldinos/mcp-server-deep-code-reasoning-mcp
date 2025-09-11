@@ -22,6 +22,9 @@ build/
 *.swo
 *~
 .DS_Store
+.github/.knowledge_base
+.github/prompts/
+.github/*.md
 .github/
 
 # Testing
@@ -33,7 +36,6 @@ coverage/
 # Logs
 logs/
 *.log
-
 
 
 # Runtime data

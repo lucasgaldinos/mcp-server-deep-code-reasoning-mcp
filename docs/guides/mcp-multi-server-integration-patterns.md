@@ -1,1 +1,0 @@
-/home/lucas_galdino/repositories/mcp_servers/mcp-server-deep-code-reasoning-mcp/.github/.knowledge_base/mcp_servers_guide/integration_examples/mcp-multi-server-integration-patterns.md
