@@ -10,7 +10,7 @@
  * @since 2025-01-09
  */
 
-import { IReasoningStrategy, IAnalysisContext, IAnalysisResult, IStrategyCapabilities, IStrategyMetrics } from './ReasoningStrategy.js';
+import { IReasoningStrategy, IAnalysisContext, IAnalysisResult, IStrategyCapabilities, IStrategyMetrics } from './reasoning-strategy.js';
 
 /**
  * Simplified deep analysis strategy implementation

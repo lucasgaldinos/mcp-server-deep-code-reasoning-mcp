@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { EnvironmentValidator, type IEnvironmentConfig, type IValidationResult } from '../utils/EnvironmentValidator.js';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { EnvironmentValidator, type IEnvironmentConfig, type IValidationResult } from '../utils/environment-validator.js';
 
 describe('EnvironmentValidator', () => {
   // Store original environment variables

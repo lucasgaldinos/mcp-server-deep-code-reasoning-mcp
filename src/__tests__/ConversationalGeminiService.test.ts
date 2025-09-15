@@ -1,5 +1,5 @@
-import { describe, it, expect, jest } from '@jest/globals';
-import { ConversationalGeminiService } from '../services/ConversationalGeminiService.js';
+import { describe, it, expect, vi } from 'vitest';
+import { ConversationalGeminiService } from '../services/conversational-gemini-service.js';
 import type { ClaudeCodeContext } from '../models/types.js';
 
 describe('ConversationalGeminiService', () => {

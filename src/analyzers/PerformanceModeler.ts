@@ -493,7 +493,7 @@ export class PerformanceModeler {
     for (let i = startLine; i < lines.length; i++) {
       const line = lines[i];
       if (line.includes('{')) {
-        if (functionStart === -1) functionStart = i;
+        if (functionStart === -1) {functionStart = i;}
         braceCount += (line.match(/{/g) || []).length;
       }
       if (line.includes('}')) {
@@ -559,7 +559,7 @@ export class PerformanceModeler {
   }
 
   private findRecursiveCalls(content: string, functionName?: string): number {
-    if (!functionName) return 0;
+    if (!functionName) {return 0;}
 
     const pattern = new RegExp(`${functionName}\\s*\\(`, 'g');
     const matches = content.match(pattern) || [];
@@ -594,8 +594,8 @@ export class PerformanceModeler {
     const i1 = order.indexOf(c1);
     const i2 = order.indexOf(c2);
 
-    if (i1 === -1) return c2;
-    if (i2 === -1) return c1;
+    if (i1 === -1) {return c2;}
+    if (i2 === -1) {return c1;}
 
     return order[Math.max(i1, i2)];
   }
@@ -656,10 +656,10 @@ export class PerformanceModeler {
     let type: QueryPattern['type'] = 'select';
     const operation = match[1]?.toLowerCase() || match[0].toLowerCase();
 
-    if (operation.includes('insert')) type = 'insert';
-    else if (operation.includes('update')) type = 'update';
-    else if (operation.includes('delete')) type = 'delete';
-    else if (operation.includes('join')) type = 'join';
+    if (operation.includes('insert')) {type = 'insert';}
+    else if (operation.includes('update')) {type = 'update';}
+    else if (operation.includes('delete')) {type = 'delete';}
+    else if (operation.includes('join')) {type = 'join';}
 
     return {
       type,
@@ -751,7 +751,7 @@ export class PerformanceModeler {
     };
 
     const pattern = cleanupPatterns[type];
-    if (!pattern) return true;
+    if (!pattern) {return true;}
 
     // Check if cleanup exists after the match
     const afterMatch = content.substring(match.index || 0);

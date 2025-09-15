@@ -13,7 +13,7 @@
  */
 
 import * as path from 'path';
-import { JSDocGenerator, JSDocReport } from '../utils/JsDocGenerator.js';
+import { JSDocGenerator, JSDocReport } from '../utils/js-doc-generator.js';
 
 interface CliOptions {
   /** Project directory to analyze */

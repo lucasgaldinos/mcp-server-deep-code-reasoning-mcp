@@ -2,16 +2,21 @@
  * @fileoverview Tests for ConfigurationManager
  */
 
-import { ConfigurationManager, EnvironmentConfigSource, FileConfigSource, DefaultConfigSource } from '../config/ConfigurationManager.js';
-import { EnvironmentValidator } from '../utils/EnvironmentValidator.js';
+import { 
+  ConfigurationManager,
+  DefaultConfigSource,
+  EnvironmentConfigSource,
+  FileConfigSource
+} from '../config/configuration-manager.js';
+import { EnvironmentValidator } from '../utils/environment-validator.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
 // Mock dependencies
-jest.mock('../utils/EnvironmentValidator.js');
+jest.mock('../utils/environment-validator.js');
 jest.mock('fs');
 
-const mockEnvironmentValidator = EnvironmentValidator as jest.Mocked<typeof EnvironmentValidator>;
+const mockEnvironmentValidator = EnvironmentValidator as jest.MockedClass<typeof EnvironmentValidator>;
 const mockFs = fs as jest.Mocked<typeof fs>;
 
 describe('ConfigurationManager', () => {
@@ -23,8 +28,8 @@ describe('ConfigurationManager', () => {
     configManager = ConfigurationManager.getInstance();
     tempConfigPath = './test-config.json';
     
-    // Mock successful environment validation
-    mockEnvironmentValidator.getValidatedConfig.mockReturnValue({
+    // Mock successful environment validation with static method
+    mockEnvironmentValidator.getValidatedConfig = jest.fn().mockReturnValue({
       geminiApiKey: 'test-key',
       nodeEnv: 'test',
       mcpServerName: 'test-server',
@@ -169,7 +174,7 @@ describe('ConfigurationManager', () => {
     });
 
     it('should handle reload errors gracefully', async () => {
-      mockEnvironmentValidator.getValidatedConfig.mockImplementation(() => {
+      (mockEnvironmentValidator.getValidatedConfig as jest.Mock).mockImplementation(() => {
         throw new Error('Validation failed');
       });
 
@@ -204,7 +209,7 @@ describe('EnvironmentConfigSource', () => {
   beforeEach(() => {
     source = new EnvironmentConfigSource();
     
-    mockEnvironmentValidator.getValidatedConfig.mockReturnValue({
+    (mockEnvironmentValidator.getValidatedConfig as jest.Mock).mockReturnValue({
       geminiApiKey: 'test-key',
       nodeEnv: 'test',
     } as any);
@@ -240,8 +245,8 @@ describe('FileConfigSource', () => {
   it('should load configuration from existing file', async () => {
     const testConfig = { logLevel: 'debug', requestTimeout: 60000 };
     
-    mockFs.existsSync.mockReturnValue(true);
-    mockFs.promises.readFile = jest.fn().mockResolvedValue(JSON.stringify(testConfig));
+    (mockFs.existsSync as jest.Mock).mockReturnValue(true);
+    (mockFs.promises.readFile as jest.Mock) = jest.fn().mockResolvedValue(JSON.stringify(testConfig));
     
     const config = await source.load();
     
@@ -250,7 +255,7 @@ describe('FileConfigSource', () => {
   });
 
   it('should return empty config for non-existent file', async () => {
-    mockFs.existsSync.mockReturnValue(false);
+    (mockFs.existsSync as jest.Mock).mockReturnValue(false);
     
     const config = await source.load();
     
@@ -258,8 +263,8 @@ describe('FileConfigSource', () => {
   });
 
   it('should handle file read errors gracefully', async () => {
-    mockFs.existsSync.mockReturnValue(true);
-    mockFs.promises.readFile = jest.fn().mockRejectedValue(new Error('Read error'));
+    (mockFs.existsSync as jest.Mock).mockReturnValue(true);
+    (mockFs.promises.readFile as jest.Mock) = jest.fn().mockRejectedValue(new Error('Read error'));
     
     const config = await source.load();
     

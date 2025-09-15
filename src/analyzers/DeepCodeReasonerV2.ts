@@ -4,15 +4,15 @@ import type {
   CodeLocation,
   TournamentResult,
 } from '@models/types.js';
-import { GeminiService } from '@services/GeminiService.js';
-import { ConversationalGeminiService } from '@services/ConversationalGeminiService.js';
-import { ConversationManager } from '@services/ConversationManager.js';
-import { SecureCodeReader } from '@utils/SecureCodeReader.js';
-import { ErrorClassifier } from '@utils/ErrorClassifier.js';
+import { GeminiService } from '@services/gemini-service.js';
+import { ConversationalGeminiService } from '@services/conversational-gemini-service.js';
+import { ConversationManager } from '@services/conversation-manager.js';
+import { SecureCodeReader } from '@utils/secure-code-reader.js';
+import { ErrorClassifier } from '@utils/error-classifier.js';
 import { ConversationLockedError, SessionNotFoundError } from '@errors/index.js';
-import { HypothesisTournamentService } from '@services/HypothesisTournamentService.js';
-import { StrategyManager } from '../strategies/StrategyManager.js';
-import type { IAnalysisContext, IAnalysisResult } from '../strategies/ReasoningStrategy.js';
+import { HypothesisTournamentService } from '@services/hypothesis-tournament-service.js';
+import { StrategyManager } from '../strategies/strategy-manager.js';
+import type { IAnalysisContext, IAnalysisResult } from '../strategies/reasoning-strategy.js';
 
 export class DeepCodeReasonerV2 {
   private geminiService: GeminiService;

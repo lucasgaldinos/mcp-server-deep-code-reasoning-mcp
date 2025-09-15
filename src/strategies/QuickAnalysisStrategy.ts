@@ -10,8 +10,8 @@
  * @since 2025-01-09
  */
 
-import { createLogger } from '@utils/StructuredLogger.js';
-import { IReasoningStrategy, IAnalysisContext, IAnalysisResult, IStrategyCapabilities, IStrategyMetrics } from './ReasoningStrategy.js';
+import { createLogger } from '@utils/structured-logger.js';
+import { IReasoningStrategy, IAnalysisContext, IAnalysisResult, IStrategyCapabilities, IStrategyMetrics } from './reasoning-strategy.js';
 
 /**
  * Simplified quick analysis strategy implementation
@@ -115,9 +115,9 @@ export class QuickAnalysisStrategy implements IReasoningStrategy {
     const hasFewFiles = context.files.length <= 10;
 
     let score = 0.3; // Base score
-    if (hasQuickKeywords) score += 0.3;
-    if (isShortQuery) score += 0.2;
-    if (hasFewFiles) score += 0.2;
+    if (hasQuickKeywords) {score += 0.3;}
+    if (isShortQuery) {score += 0.2;}
+    if (hasFewFiles) {score += 0.2;}
 
     return Math.min(score, 1.0);
   }

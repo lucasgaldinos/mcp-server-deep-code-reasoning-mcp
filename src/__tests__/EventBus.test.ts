@@ -2,7 +2,7 @@
  * @fileoverview Tests for EventBus observer pattern implementation
  */
 
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from 'vitest';
 import { 
   EventBus, 
   EventFactory, 
@@ -10,7 +10,7 @@ import {
   AnalysisProgressEvent,
   SystemEvent,
   EventType 
-} from '../../src/utils/EventBus.js';
+} from '../../src/utils/event-bus.js';
 
 describe('EventBus', () => {
   let eventBus: EventBus;
@@ -26,7 +26,7 @@ describe('EventBus', () => {
 
   describe('Subscription Management', () => {
     it('should allow subscribing to specific event types', () => {
-      const handler = jest.fn();
+      const handler = vi.fn();
       const subscription = eventBus.subscribe('analysis:started', handler as any);
       
       expect(subscription.id).toMatch(/^sub_\d+$/);
@@ -36,7 +36,7 @@ describe('EventBus', () => {
     });
 
     it('should allow subscribing to all events with wildcard', () => {
-      const handler = jest.fn();
+      const handler = vi.fn();
       const subscription = eventBus.subscribe('*', handler as any);
       
       expect(subscription.eventType).toBe('*');
@@ -45,7 +45,7 @@ describe('EventBus', () => {
     });
 
     it('should allow unsubscribing', () => {
-      const handler = jest.fn();
+      const handler = vi.fn();
       const subscription = eventBus.subscribe('analysis:started', handler as any);
       
       expect(eventBus.getSubscriptionCount()).toBe(1);
@@ -56,8 +56,8 @@ describe('EventBus', () => {
     });
 
     it('should handle multiple subscriptions', () => {
-      const handler1 = jest.fn();
-      const handler2 = jest.fn();
+      const handler1 = vi.fn();
+      const handler2 = vi.fn();
       
       eventBus.subscribe('analysis:started', handler1 as any);
       eventBus.subscribe('analysis:progress', handler2 as any);
@@ -70,7 +70,7 @@ describe('EventBus', () => {
 
   describe('Event Publishing', () => {
     it('should publish events to specific subscribers', async () => {
-      const handler = jest.fn();
+      const handler = vi.fn();
       eventBus.subscribe('analysis:started', handler as any);
       
       const event = EventFactory.createAnalysisEvent(
@@ -88,8 +88,8 @@ describe('EventBus', () => {
     });
 
     it('should publish events to wildcard subscribers', async () => {
-      const wildcardHandler = jest.fn();
-      const specificHandler = jest.fn();
+      const wildcardHandler = vi.fn();
+      const specificHandler = vi.fn();
       
       eventBus.subscribe('*', wildcardHandler as any);
       eventBus.subscribe('analysis:started', specificHandler as any);
@@ -108,7 +108,7 @@ describe('EventBus', () => {
     });
 
     it('should not call handlers for unmatched event types', async () => {
-      const handler = jest.fn();
+      const handler = vi.fn();
       eventBus.subscribe('analysis:started', handler as any);
       
       const event = EventFactory.createAnalysisEvent(
@@ -124,10 +124,10 @@ describe('EventBus', () => {
     });
 
     it('should handle handler errors gracefully', async () => {
-      const errorHandler = jest.fn().mockImplementation(() => {
+      const errorHandler = vi.fn().mockImplementation(() => {
         throw new Error('Handler error');
       });
-      const goodHandler = jest.fn();
+      const goodHandler = vi.fn();
       
       eventBus.subscribe('analysis:started', errorHandler as any);
       eventBus.subscribe('analysis:started', goodHandler as any);
@@ -147,7 +147,7 @@ describe('EventBus', () => {
     });
 
     it('should handle async handlers', async () => {
-      const asyncHandler = jest.fn().mockImplementation(async () => {
+      const asyncHandler = vi.fn().mockImplementation(async () => {
         await new Promise(resolve => setTimeout(resolve, 10));
       });
       
@@ -176,7 +176,7 @@ describe('EventBus', () => {
 
     it('should maintain subscriptions across getInstance calls', () => {
       const instance1 = EventBus.getInstance();
-      const handler = jest.fn();
+      const handler = vi.fn();
       instance1.subscribe('analysis:started', handler as any);
       
       const instance2 = EventBus.getInstance();
@@ -265,13 +265,13 @@ describe('EventFactory', () => {
 describe('EventPublisher', () => {
   let eventBus: EventBus;
   let eventPublisher: EventPublisher;
-  let mockHandler: jest.Mock;
+  let mockHandler: Mock;
 
   beforeEach(() => {
     eventBus = EventBus.getInstance();
     eventBus.clear();
     eventPublisher = new EventPublisher(eventBus);
-    mockHandler = jest.fn();
+    mockHandler = vi.fn();
   });
 
   afterEach(() => {

@@ -2,13 +2,13 @@
  * @fileoverview Tests for HealthChecker monitoring system
  */
 
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { 
   HealthChecker, 
   BuiltinHealthChecks,
   HealthCheckConfig,
   HealthStatus
-} from '../../src/utils/HealthChecker.js';
+} from '../../src/utils/health-checker.js';
 
 describe('HealthChecker', () => {
   let healthChecker: HealthChecker;

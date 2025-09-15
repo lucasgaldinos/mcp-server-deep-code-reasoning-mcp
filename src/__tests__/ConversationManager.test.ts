@@ -1,5 +1,5 @@
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
-import { ConversationManager, ConversationState } from '../services/ConversationManager.js';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { ConversationManager, ConversationState } from '../services/conversation-manager.js';
 import type { ClaudeCodeContext } from '../models/types.js';
 
 describe('ConversationManager', () => {
@@ -18,16 +18,16 @@ describe('ConversationManager', () => {
   };
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     manager = new ConversationManager();
     mockGeminiSession = {
-      sendMessage: jest.fn(),
+      sendMessage: vi.fn(),
     };
   });
 
   afterEach(() => {
-    jest.clearAllTimers();
-    jest.useRealTimers();
+    vi.clearAllTimers();
+    vi.useRealTimers();
   });
 
   describe('createSession', () => {
@@ -80,7 +80,7 @@ describe('ConversationManager', () => {
       const initialActivity = session!.lastActivity;
 
       // Wait a bit to ensure timestamp difference
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
 
       manager.addTurn(sessionId, 'claude', 'Test message', {
         analysisType: 'test',
@@ -201,13 +201,13 @@ describe('ConversationManager', () => {
       const sessionId2 = manager.createSession(testContext);
 
       // Advance time past timeout for session1
-      jest.advanceTimersByTime(31 * 60 * 1000); // 31 minutes
+      vi.advanceTimersByTime(31 * 60 * 1000); // 31 minutes
 
       // Create a new session to trigger cleanup interval
       const sessionId3 = manager.createSession(testContext);
 
       // Trigger cleanup
-      jest.advanceTimersByTime(5 * 60 * 1000); // 5 minutes for interval
+      vi.advanceTimersByTime(5 * 60 * 1000); // 5 minutes for interval
 
       // Session1 should be gone, others should remain
       expect(manager.getSession(sessionId1)).toBeNull();

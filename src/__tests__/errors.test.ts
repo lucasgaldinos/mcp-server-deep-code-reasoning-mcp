@@ -1,4 +1,4 @@
-import { describe, it, expect, jest } from '@jest/globals';
+import { describe, it, expect, vi } from 'vitest';
 import {
   SessionError,
   ApiError,
@@ -7,7 +7,7 @@ import {
   ConversationLockedError,
   SessionNotFoundError,
 } from '../errors/index.js';
-import { ErrorClassifier } from '../utils/ErrorClassifier.js';
+import { ErrorClassifier } from '../utils/error-classifier.js';
 
 describe('Custom Error Classes', () => {
   describe('SessionError', () => {

@@ -2,32 +2,38 @@
  * @fileoverview Tests for Reasoning Strategies
  */
 
+import { vi, describe, it, expect, beforeEach, type Mock, type MockedFunction } from 'vitest';
 import { 
   IAnalysisContext, 
   AnalysisType,
   BaseReasoningStrategy 
-} from '../strategies/ReasoningStrategy.js';
+} from '../strategies/reasoning-strategy.js';
 import { DeepAnalysisStrategy } from '../strategies/DeepAnalysisStrategy.js';
 import { QuickAnalysisStrategy } from '../strategies/QuickAnalysisStrategy.js';
-import { EnvironmentValidator } from '../utils/EnvironmentValidator.js';
+import { EnvironmentValidator } from '../utils/environment-validator.js';
 
 // Mock dependencies
-jest.mock('../utils/EnvironmentValidator.js');
-jest.mock('@google/generative-ai');
+vi.mock('../utils/environment-validator.js', () => ({
+  EnvironmentValidator: {
+    getValidatedConfig: vi.fn()
+  }
+}));
+vi.mock('@google/generative-ai');
 
-const mockEnvironmentValidator = EnvironmentValidator as jest.Mocked<typeof EnvironmentValidator>;
+// Access the mocked EnvironmentValidator
+const mockEnvironmentValidator = vi.mocked(EnvironmentValidator);
 
 // Mock GoogleGenerativeAI
-const mockGenerateContent = jest.fn();
-const mockGetGenerativeModel = jest.fn().mockReturnValue({
+const mockGenerateContent = vi.fn();
+const mockGetGenerativeModel = vi.fn().mockReturnValue({
   generateContent: mockGenerateContent,
 });
-const MockGoogleGenerativeAI = jest.fn().mockImplementation(() => ({
+const MockGoogleGenerativeAI = vi.fn().mockImplementation(() => ({
   getGenerativeModel: mockGetGenerativeModel,
 }));
 
 // Mock the module
-jest.mock('@google/generative-ai', () => ({
+vi.mock('@google/generative-ai', () => ({
   GoogleGenerativeAI: MockGoogleGenerativeAI,
 }));
 
@@ -102,7 +108,7 @@ describe('BaseReasoningStrategy', () => {
       await strategy.analyze(context);
       
       // Second analysis with different metrics
-      strategy['createResult'] = jest.fn().mockReturnValue({
+      strategy['createResult'] = vi.fn().mockReturnValue({
         success: true,
         analysis: 'Second result',
         confidence: 0.6,
@@ -200,7 +206,7 @@ describe('DeepAnalysisStrategy', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('strategy properties', () => {
@@ -356,7 +362,7 @@ describe('QuickAnalysisStrategy', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('strategy properties', () => {

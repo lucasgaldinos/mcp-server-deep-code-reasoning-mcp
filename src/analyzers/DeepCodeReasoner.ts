@@ -14,7 +14,7 @@ import type {
 import { ExecutionTracer } from './ExecutionTracer.js';
 import { SystemBoundaryAnalyzer } from './SystemBoundaryAnalyzer.js';
 import { PerformanceModeler } from './PerformanceModeler.js';
-import { HypothesisTester } from './HypothesisTester.js';
+import { HypothesisTester } from './hypothesis-tester.js';
 
 // Local type definitions
 interface ExecutionGraph {

@@ -2,32 +2,39 @@
  * @fileoverview Tests for Performance Monitor
  */
 
-import { jest } from '@jest/globals';
-import { PerformanceMonitor, defaultPerformanceConfig } from '../utils/PerformanceMonitor.js';
-import { EventBus } from '../utils/EventBus.js';
+import { vi } from 'vitest';
+import { PerformanceMonitor, defaultPerformanceConfig } from '../utils/performance-monitor.js';
 
-// Mock EventBus
-jest.mock('../utils/EventBus.js');
+// Mock EventBus module
+const mockEventBusInstance = {
+  publish: vi.fn(),
+  subscribe: vi.fn().mockReturnValue({
+    unsubscribe: vi.fn()
+  }),
+  clearSubscriptions: vi.fn()
+};
 
 const mockEventBus = {
-  publish: jest.fn(),
-} as any;
+  getInstance: vi.fn().mockReturnValue(mockEventBusInstance)
+};
 
-(EventBus.getInstance as jest.Mock).mockReturnValue(mockEventBus);
+vi.mock('../utils/event-bus.js', () => ({
+  EventBus: mockEventBus
+}));
 
 describe('PerformanceMonitor', () => {
   let performanceMonitor: PerformanceMonitor;
 
   beforeEach(() => {
     performanceMonitor = new PerformanceMonitor(defaultPerformanceConfig);
-    jest.clearAllMocks();
-    jest.clearAllTimers();
-    jest.useFakeTimers();
+    vi.clearAllMocks();
+    vi.clearAllTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
     performanceMonitor.stop();
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe('initialization', () => {
@@ -77,7 +84,7 @@ describe('PerformanceMonitor', () => {
       performanceMonitor.startOperation('op-1', 'test-operation');
       
       // Simulate some time passing
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
       
       const duration = performanceMonitor.endOperation('op-1');
       expect(duration).toBeDefined();
@@ -108,7 +115,7 @@ describe('PerformanceMonitor', () => {
       performanceMonitor.startOperation('op-1', 'wrapped-test');
       
       // Simulate operation
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
       
       const duration = performanceMonitor.endOperation('op-1');
       
@@ -120,10 +127,10 @@ describe('PerformanceMonitor', () => {
       performanceMonitor.startOperation('op-1', 'concurrent-test-1');
       performanceMonitor.startOperation('op-2', 'concurrent-test-2');
       
-      jest.advanceTimersByTime(50);
+      vi.advanceTimersByTime(50);
       const duration1 = performanceMonitor.endOperation('op-1');
       
-      jest.advanceTimersByTime(50);
+      vi.advanceTimersByTime(50);
       const duration2 = performanceMonitor.endOperation('op-2');
       
       expect(duration1).toBeDefined();
@@ -136,16 +143,16 @@ describe('PerformanceMonitor', () => {
     it('should collect operation statistics', () => {
       // Start and end some operations
       performanceMonitor.startOperation('op-1', 'operation-1');
-      jest.advanceTimersByTime(50);
+      vi.advanceTimersByTime(50);
       performanceMonitor.endOperation('op-1');
       
       performanceMonitor.startOperation('op-2', 'operation-2');
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
       performanceMonitor.endOperation('op-2');
       
       // Same operation type again
       performanceMonitor.startOperation('op-3', 'operation-1');
-      jest.advanceTimersByTime(75);
+      vi.advanceTimersByTime(75);
       performanceMonitor.endOperation('op-3');
       
       const stats = performanceMonitor.getPerformanceStats();
@@ -180,7 +187,7 @@ describe('PerformanceMonitor', () => {
       performanceMonitor.start();
       
       // Wait for resource collection
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
       
       const history = performanceMonitor.getResourceUsageHistory();
       expect(Array.isArray(history)).toBe(true);
@@ -216,11 +223,11 @@ describe('PerformanceMonitor', () => {
 
   describe('periodic collection', () => {
     beforeEach(() => {
-      jest.useRealTimers(); // Use real timers for interval testing
+      vi.useRealTimers(); // Use real timers for interval testing
     });
 
     afterEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     it('should start periodic resource collection when monitoring starts', (done) => {
@@ -228,7 +235,7 @@ describe('PerformanceMonitor', () => {
       
       // Wait for first collection
       setTimeout(() => {
-        expect(mockEventBus.publish).toHaveBeenCalledWith(
+        expect(mockEventBusInstance.publish).toHaveBeenCalledWith(
           expect.objectContaining({
             type: 'system:performance_data_collected',
             component: 'PerformanceMonitor',
@@ -243,11 +250,11 @@ describe('PerformanceMonitor', () => {
     it('should export all metrics', () => {
       // Record some operations first
       performanceMonitor.startOperation('op-1', 'export-test-1');
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
       performanceMonitor.endOperation('op-1');
       
       performanceMonitor.startOperation('op-2', 'export-test-2');
-      jest.advanceTimersByTime(200);
+      vi.advanceTimersByTime(200);
       performanceMonitor.endOperation('op-2');
       
       const exported = performanceMonitor.exportMetrics();
@@ -264,7 +271,7 @@ describe('PerformanceMonitor', () => {
     it('should clear all metrics', () => {
       // Record some operations
       performanceMonitor.startOperation('op-1', 'clear-test');
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
       performanceMonitor.endOperation('op-1');
       
       let stats = performanceMonitor.getPerformanceStats();

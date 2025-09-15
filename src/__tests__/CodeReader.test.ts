@@ -1,5 +1,5 @@
-import { describe, it, expect } from '@jest/globals';
-import { CodeReader } from '../utils/CodeReader.js';
+import { describe, it, expect } from 'vitest';
+import { CodeReader } from '../utils/code-reader.js';
 import type { CodeScope } from '../models/types.js';
 
 describe('CodeReader', () => {

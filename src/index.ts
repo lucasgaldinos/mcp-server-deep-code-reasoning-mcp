@@ -19,12 +19,12 @@ import * as dotenv from 'dotenv';
 
 import { DeepCodeReasonerV2 } from '@analyzers/DeepCodeReasonerV2.js';
 import type { ClaudeCodeContext } from '@models/types.js';
-import { ErrorClassifier } from '@utils/ErrorClassifier.js';
-import { InputValidator } from '@utils/InputValidator.js';
-import { logger } from '@utils/Logger.js';
-import { HealthChecker, BuiltinHealthChecks } from '@utils/HealthChecker.js';
-import { EnvironmentValidator } from '@utils/EnvironmentValidator.js';
-import { MemoryManagementProtocol } from '@utils/MemoryManagementProtocol.js';
+import { ErrorClassifier } from '@utils/error-classifier.js';
+import { InputValidator } from '@utils/input-validator.js';
+import { logger } from '@utils/logger.js';
+import { HealthChecker, BuiltinHealthChecks } from '@utils/health-checker.js';
+import { EnvironmentValidator } from '@utils/environment-validator.js';
+import { MemoryManagementProtocol } from '@utils/memory-management-protocol.js';
 
 /**
  * Load and validate environment variables.
@@ -129,7 +129,7 @@ const ClaudeCodeContextSchema = z.object({
  * @type {z.ZodObject}
  */
 const EscalateAnalysisSchema = z.object({
-  claudeContext: ClaudeCodeContextSchema,
+  analysisContext: ClaudeCodeContextSchema,
   analysisType: z.enum(['execution_trace', 'cross_system', 'performance', 'hypothesis_test']),
   depthLevel: z.number().min(1).max(5),
   timeBudgetSeconds: z.number().default(60),
@@ -195,7 +195,7 @@ const PerformanceBottleneckSchema = z.object({
  * @type {z.ZodObject}
  */
 const StartConversationSchema = z.object({
-  claudeContext: ClaudeCodeContextSchema,
+  analysisContext: ClaudeCodeContextSchema,
   analysisType: z.enum(['execution_trace', 'cross_system', 'performance', 'hypothesis_test']),
   initialQuestion: z.string().optional(),
 });
@@ -232,7 +232,7 @@ const GetConversationStatusSchema = z.object({
  * @type {z.ZodObject}
  */
 const RunHypothesisTournamentSchema = z.object({
-  claudeContext: ClaudeCodeContextSchema,
+  analysisContext: ClaudeCodeContextSchema,
   issue: z.string(),
   tournamentConfig: z.object({
     maxHypotheses: z.number().min(2).max(20).optional(),
@@ -266,7 +266,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            claudeContext: {
+            analysisContext: {
               type: 'object',
               properties: {
                 attemptedApproaches: {
@@ -325,7 +325,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: 'Maximum time for analysis',
             },
           },
-          required: ['claudeContext', 'analysisType', 'depthLevel'],
+          required: ['analysisContext', 'analysisType', 'depthLevel'],
         },
       },
       {
@@ -424,7 +424,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            claudeContext: {
+            analysisContext: {
               type: 'object',
               properties: {
                 attemptedApproaches: {
@@ -476,7 +476,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: 'Initial question to start the conversation',
             },
           },
-          required: ['claudeContext', 'analysisType'],
+          required: ['analysisContext', 'analysisType'],
         },
       },
       {
@@ -540,7 +540,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            claudeContext: {
+            analysisContext: {
               type: 'object',
               properties: {
                 attemptedApproaches: {
@@ -610,7 +610,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               },
             },
           },
-          required: ['claudeContext', 'issue'],
+          required: ['analysisContext', 'issue'],
         },
       },
       {
@@ -660,8 +660,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'escalate_analysis': {
         const parsed = EscalateAnalysisSchema.parse(args);
 
-        // Validate and sanitize the Claude context
-        const validatedContext = InputValidator.validateClaudeContext(parsed.claudeContext);
+        // Validate and sanitize the analysis context
+        const validatedContext = InputValidator.validateClaudeContext(parsed.analysisContext);
 
         // Override with specific values from the parsed input
         const context: ClaudeCodeContext = {
@@ -672,7 +672,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const result = await deepReasoner.escalateFromClaudeCode(
           context,
           parsed.analysisType,
-          parsed.depthLevel || 3,
+          parsed.depthLevel || 3
         );
 
         return {
@@ -801,8 +801,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'start_conversation': {
         const parsed = StartConversationSchema.parse(args);
 
-        // Validate and sanitize the Claude context
-        const validatedContext = InputValidator.validateClaudeContext(parsed.claudeContext);
+        // Validate and sanitize the analysis context
+        const validatedContext = InputValidator.validateClaudeContext(parsed.analysisContext);
 
         // Override default budget
         const context: ClaudeCodeContext = {
@@ -880,8 +880,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'run_hypothesis_tournament': {
         const parsed = RunHypothesisTournamentSchema.parse(args);
 
-        // Validate and sanitize the Claude context
-        const validatedContext = InputValidator.validateClaudeContext(parsed.claudeContext);
+        // Validate and sanitize the analysis context
+        const validatedContext = InputValidator.validateClaudeContext(parsed.analysisContext);
 
         // Override with specific values from the parsed input
         const context: ClaudeCodeContext = {

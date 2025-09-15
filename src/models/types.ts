@@ -6,6 +6,22 @@ export interface ClaudeCodeContext {
   analysisBudgetRemaining: number;
 }
 
+export interface AnalysisResult {
+  success: boolean;
+  analysis: string;
+  confidence: number;
+  strategy: string;
+  executionTime: number;
+  memoryUsed: number;
+  metadata?: Record<string, any>;
+}
+
+export enum Provider {
+  GEMINI = 'gemini',
+  OPENAI = 'openai', 
+  COPILOT = 'copilot'
+}
+
 export interface AnalysisEscalation {
   trigger: 'context_limit' | 'complexity_threshold' | 'ambiguous_findings';
   claudeCodeContext: ClaudeCodeContext;

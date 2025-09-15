@@ -8,7 +8,7 @@
 
 import { readFile, readdir, stat } from 'fs/promises';
 import { join, relative } from 'path';
-import { NamingConventions, type IProjectNamingReport } from '../utils/NamingConventions.js';
+import { NamingConventions, type IProjectNamingReport } from '../utils/naming-conventions.js';
 
 interface ICLIOptions {
   projectPath: string;
@@ -171,7 +171,7 @@ class NamingConventionsCLI {
 
     let violationCount = 0;
     for (const fileResult of report.fileResults) {
-      if (fileResult.violations.length === 0) continue;
+      if (fileResult.violations.length === 0) {continue;}
 
       console.log(`\n📄 ${fileResult.filePath}`);
       console.log(`   Compliance: ${fileResult.summary.compliancePercentage}%`);
@@ -192,7 +192,7 @@ class NamingConventionsCLI {
         }
       }
 
-      if (!this.options.verbose && violationCount >= 20) break;
+      if (!this.options.verbose && violationCount >= 20) {break;}
     }
 
     // Recommendations
@@ -240,7 +240,7 @@ class NamingConventionsCLI {
     console.log('## Violations by File\n');
 
     for (const fileResult of report.fileResults) {
-      if (fileResult.violations.length === 0) continue;
+      if (fileResult.violations.length === 0) {continue;}
 
       console.log(`### \`${fileResult.filePath}\`\n`);
       console.log(`**Compliance:** ${fileResult.summary.compliancePercentage}%\n`);

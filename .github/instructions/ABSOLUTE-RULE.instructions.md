@@ -1,1 +1,0 @@
-/home/lucas_galdino/repositories/mcp_servers/arxiv-mcp-improved/.github/copilot-instructions.md

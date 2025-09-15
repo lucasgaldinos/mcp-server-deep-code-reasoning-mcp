@@ -78,10 +78,10 @@ export class ExecutionTracer {
     maxDepth: number,
     includeDataFlow: boolean,
   ): Promise<void> {
-    if (currentDepth >= maxDepth) return;
+    if (currentDepth >= maxDepth) {return;}
 
     const nodeId = this.locationToId(location);
-    if (graph.nodes.has(nodeId)) return; // Already processed
+    if (graph.nodes.has(nodeId)) {return;} // Already processed
 
     try {
       // Read and parse the file
@@ -90,7 +90,7 @@ export class ExecutionTracer {
 
       // Find the function/method at the given location
       const targetNode = this.findNodeAtLocation(ast, location);
-      if (!targetNode) return;
+      if (!targetNode) {return;}
 
       // Create execution node
       const execNode: ExecutionNode = {
@@ -194,34 +194,34 @@ export class ExecutionTracer {
     if ('functions' in node) {
       for (const func of node.functions) {
         const result = this.traverseAST(func, visitor);
-        if (result) return result;
+        if (result) {return result;}
       }
       return null;
     }
 
     const result = visitor(node);
-    if (result) return result;
+    if (result) {return result;}
 
     const astNode = node as ASTNode;
 
     if (astNode.declarations) {
       for (const decl of astNode.declarations) {
         const result = this.traverseAST(decl, visitor);
-        if (result) return result;
+        if (result) {return result;}
       }
     }
 
     if (astNode.methods) {
       for (const method of astNode.methods) {
         const result = this.traverseAST(method, visitor);
-        if (result) return result;
+        if (result) {return result;}
       }
     }
 
     if (astNode.body && Array.isArray(astNode.body)) {
       for (const child of astNode.body) {
         const result = this.traverseAST(child, visitor);
-        if (result) return result;
+        if (result) {return result;}
       }
     }
 
@@ -348,7 +348,7 @@ export class ExecutionTracer {
   }
 
   private extractVariableName(node: ASTNode | undefined): string {
-    if (!node) return 'unknown';
+    if (!node) {return 'unknown';}
     if (node.type === 'Identifier') {
       return node.name || 'unknown';
     }
@@ -395,11 +395,11 @@ export class ExecutionTracer {
     steps: ExecutionStep[],
     visited: Set<string>,
   ): Promise<void> {
-    if (visited.has(nodeId)) return;
+    if (visited.has(nodeId)) {return;}
     visited.add(nodeId);
 
     const node = graph.nodes.get(nodeId);
-    if (!node) return;
+    if (!node) {return;}
 
     const step: ExecutionStep = {
       location: node.location,

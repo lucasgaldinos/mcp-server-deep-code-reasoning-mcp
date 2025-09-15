@@ -1,5 +1,5 @@
-import { describe, it, expect } from '@jest/globals';
-import { NamingConventions, type NamingType, type INamingValidationResult } from '../utils/NamingConventions.js';
+import { describe, it, expect } from 'vitest';
+import { NamingConventions, type NamingType, type INamingValidationResult } from '../utils/naming-conventions.js';
 
 describe('NamingConventions', () => {
   describe('validateName', () => {

@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { GeminiService } from '../services/GeminiService.js';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { GeminiService } from '../services/gemini-service.js';
 import { ApiError, RateLimitError } from '../errors/index.js';
 import type { ClaudeCodeContext, CodeLocation } from '../models/types.js';
 
 // Mock the Google Generative AI module completely
-const mockGenerateContent = jest.fn() as any;
-const mockGetGenerativeModel = jest.fn();
+const mockGenerateContent = vi.fn() as any;
+const mockGetGenerativeModel = vi.fn();
 
-jest.mock('@google/generative-ai', () => ({
-  GoogleGenerativeAI: jest.fn().mockImplementation(() => ({
+vi.mock('@google/generative-ai', () => ({
+  GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
     getGenerativeModel: mockGetGenerativeModel,
   })),
 }));
@@ -19,11 +19,11 @@ describe('GeminiService', () => {
 
   beforeEach(() => {
     // Reset all mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Create mock response object
     mockResponse = {
-      text: jest.fn().mockReturnValue('{"status": "success", "analysis": "test result"}'),
+      text: vi.fn().mockReturnValue('{"status": "success", "analysis": "test result"}'),
     };
 
     // Set up the mock chain
@@ -39,7 +39,115 @@ describe('GeminiService', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
+  });
+
+  describe('Dependency Injection Tests (Working Mocks)', () => {
+    let geminiServiceWithMock: GeminiService;
+    let mockGenAI: any;
+
+    beforeEach(() => {
+      // Create a mock GoogleGenerativeAI instance using dependency injection
+      mockGenAI = {
+        getGenerativeModel: vi.fn().mockReturnValue({
+          generateContent: (vi.fn() as any).mockResolvedValue({
+            response: {
+              text: () => JSON.stringify({
+                rootCauses: [{
+                  type: "performance",
+                  description: "Mock root cause for DI test",
+                  evidence: ["mock.ts:1"],
+                  confidence: 0.85,
+                  fixStrategy: "optimize performance"
+                }],
+                executionPaths: [{
+                  id: "path1", 
+                  description: "Mock execution path",
+                  criticalSteps: ["step1", "step2"],
+                  issues: []
+                }],
+                performanceBottlenecks: [{
+                  location: "mock.ts:5",
+                  severity: "high",
+                  description: "Mock performance bottleneck",
+                  impact: "response time",
+                  suggestions: ["add caching"]
+                }],
+                crossSystemImpacts: [],
+                recommendations: {
+                  immediate: ["Fix mock issue 1", "Fix mock issue 2"],
+                  investigate: ["Investigate mock area"],
+                  refactor: ["Refactor mock component"]
+                },
+                insights: [{
+                  type: "pattern",
+                  description: "Mock insight",
+                  evidence: ["mock evidence"]
+                }]
+              })
+            }
+          })
+        })
+      };
+
+      // Inject the mock into the service
+      geminiServiceWithMock = new GeminiService('test-key-di', mockGenAI);
+    });
+
+    it('should successfully analyze code with dependency injection mocks', async () => {
+      // Arrange
+      const context: ClaudeCodeContext = {
+        attemptedApproaches: ['static analysis', 'code review'],
+        partialFindings: [],
+        stuckPoints: ['performance bottleneck'],
+        focusArea: { 
+          files: ['user.service.ts'], 
+          entryPoints: [{ file: 'user.service.ts', line: 45 }] 
+        },
+        analysisBudgetRemaining: 30,
+      };
+
+      const codeContent = new Map([
+        ['user.service.ts', 'class UserService { async getUser() { /* performance issue */ } }']
+      ]);
+
+      // Act
+      const result = await geminiServiceWithMock.analyzeWithGemini(context, 'execution_trace', codeContent);
+
+      // Assert
+      expect(result.status).toBe('success');
+      expect(result.findings.rootCauses).toHaveLength(1);
+      expect(result.findings.rootCauses[0].type).toBe('performance');
+      expect(result.findings.rootCauses[0].confidence).toBe(0.85);
+      expect(result.findings.performanceBottlenecks).toHaveLength(1);
+      expect(result.recommendations.immediateActions).toHaveLength(2);
+      expect(mockGenAI.getGenerativeModel).toHaveBeenCalled();
+    });
+
+    it('should handle API errors with dependency injection mocks', async () => {
+      // Arrange: Mock API error
+      const mockErrorGenAI = {
+        getGenerativeModel: vi.fn().mockReturnValue({
+          generateContent: (vi.fn() as any).mockRejectedValue(new Error('Mock API error'))
+        })
+      };
+
+      const geminiServiceWithError = new GeminiService('test-key-error', mockErrorGenAI as any);
+      
+      const context: ClaudeCodeContext = {
+        attemptedApproaches: ['test'],
+        partialFindings: [],
+        stuckPoints: ['auth issue'],
+        focusArea: { files: ['test.ts'], entryPoints: [] },
+        analysisBudgetRemaining: 30,
+      };
+
+      // Act & Assert
+      await expect(geminiServiceWithError.analyzeWithGemini(context, 'execution_trace', new Map()))
+        .rejects.toThrow(ApiError);
+        
+      expect(mockErrorGenAI.getGenerativeModel).toHaveBeenCalled();
+    });
   });
 
   describe('Real Functionality Tests', () => {

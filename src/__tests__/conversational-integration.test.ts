@@ -1,6 +1,6 @@
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DeepCodeReasonerV2 } from '../analyzers/DeepCodeReasonerV2.js';
-import { ConversationManager } from '../services/ConversationManager.js';
+import { ConversationManager } from '../services/conversation-manager.js';
 import type { ClaudeCodeContext } from '../models/types.js';
 
 describe('Conversational MCP Tools - Simple Integration', () => {

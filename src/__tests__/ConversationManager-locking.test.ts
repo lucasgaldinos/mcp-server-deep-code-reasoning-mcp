@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { ConversationManager } from '../services/ConversationManager.js';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { ConversationManager } from '../services/conversation-manager.js';
 import type { ClaudeCodeContext } from '../models/types.js';
 
 describe('ConversationManager Locking', () => {

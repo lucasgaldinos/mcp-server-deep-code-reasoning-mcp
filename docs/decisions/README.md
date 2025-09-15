@@ -5,6 +5,7 @@ This directory contains Architectural Decision Records (ADRs) and design decisio
 ## 📝 **Decision Records**
 
 ### Core Architecture
+
 - [`workspace-structure-enforcement-adr.md`](./workspace-structure-enforcement-adr.md) - **ADR-006**: Comprehensive workspace structure enforcement implementation
 - [`codebase-evolution-analysis.md`](./codebase-evolution-analysis.md) - Codebase evolution strategy
 - [`conversation-analysis.md`](./conversation-analysis.md) - Conversational analysis patterns
@@ -13,6 +14,7 @@ This directory contains Architectural Decision Records (ADRs) and design decisio
 - [`final-report.md`](./final-report.md) - Implementation completion report
 
 ### Project Completion
+
 - [`COMPLETION_REPORT.md`](./COMPLETION_REPORT.md) - Project completion summary
 - [`FILE_RECOVERY_SUMMARY.md`](./FILE_RECOVERY_SUMMARY.md) - File organization and recovery
 - [`REPOSITORY_STRUCTURE_COMPLETE.md`](./REPOSITORY_STRUCTURE_COMPLETE.md) - Repository structure completion
@@ -27,6 +29,7 @@ This directory contains Architectural Decision Records (ADRs) and design decisio
 ## 📖 **Decision Format**
 
 Each decision document follows this structure:
+
 - **Context**: Why this decision was needed
 - **Options**: Alternatives considered
 - **Decision**: What was chosen and why

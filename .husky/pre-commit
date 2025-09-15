@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Phase 3 Quality Enforcement - Pre-commit Hook
+echo "🚦 Running Quality Gates..."
+
+# Run fast quality gates for pre-commit
+npx tsx scripts/development/quality-gates.ts fast
+
+# If fast gates pass, show reminder about full enforcement
+if [ $? -eq 0 ]; then
+  echo "✅ Fast quality gates passed"
+  echo "💡 Run 'npm run quality:enforce' before pushing for full validation"
+else
+  echo "❌ Fast quality gates failed - commit blocked"
+  echo "💡 Run 'npm run quality:validate' to see detailed issues"
+  exit 1
+fi

@@ -5,9 +5,9 @@
  */
 
 import dotenv from 'dotenv';
-import { ConversationalGeminiService } from '../src/services/ConversationalGeminiService.js';
-import { ConversationManager } from '../src/services/ConversationManager.js';
-import { GeminiService } from '../src/services/GeminiService.js';
+import { ConversationalGeminiService } from '../src/services/conversational-gemini-service.js';
+import { ConversationManager } from '../src/services/conversation-manager.js';
+import { GeminiService } from '../src/services/gemini-service.js';
 import { DeepCodeReasonerV2 } from '../src/analyzers/DeepCodeReasonerV2.js';
 import type { ClaudeCodeContext } from '../src/models/types.js';
 

@@ -2,25 +2,32 @@
  * @fileoverview Tests for Memory Manager
  */
 
-import { jest } from '@jest/globals';
-import { MemoryManager, defaultMemoryConfig, defaultConversationConfig, type CleanupCallback } from '../utils/MemoryManager.js';
-import { EventBus } from '../utils/EventBus.js';
+import { vi } from 'vitest';
+import { MemoryManager, defaultMemoryConfig, defaultConversationConfig, type CleanupCallback } from '../utils/memory-manager.js';
 
-// Mock EventBus
-jest.mock('../utils/EventBus.js');
-const mockEventBus = EventBus as jest.Mocked<typeof EventBus>;
+// Mock EventBus module
 const mockEventBusInstance = {
-  publish: jest.fn(),
-} as any;
+  publish: vi.fn(),
+  subscribe: vi.fn().mockReturnValue({
+    unsubscribe: vi.fn()
+  }),
+  clearSubscriptions: vi.fn()
+};
 
-mockEventBus.getInstance.mockReturnValue(mockEventBusInstance);
+const mockEventBus = {
+  getInstance: vi.fn().mockReturnValue(mockEventBusInstance)
+};
+
+vi.mock('../utils/event-bus.js', () => ({
+  EventBus: mockEventBus
+}));
 
 describe('MemoryManager', () => {
   let memoryManager: MemoryManager;
 
   beforeEach(() => {
     memoryManager = new MemoryManager(defaultMemoryConfig, defaultConversationConfig);
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
@@ -132,7 +139,7 @@ describe('MemoryManager', () => {
 
   describe('cleanup callbacks', () => {
     it('should register cleanup callbacks', () => {
-      const callback = jest.fn<CleanupCallback>().mockResolvedValue(100);
+      const callback = vi.fn<CleanupCallback>().mockResolvedValue(100);
       memoryManager.registerCleanupCallback('test-callback', callback);
       
       // Should not throw
@@ -140,7 +147,7 @@ describe('MemoryManager', () => {
     });
 
     it('should unregister cleanup callbacks', () => {
-      const callback = jest.fn<CleanupCallback>().mockResolvedValue(100);
+      const callback = vi.fn<CleanupCallback>().mockResolvedValue(100);
       memoryManager.registerCleanupCallback('test-callback', callback);
       
       expect(memoryManager.unregisterCleanupCallback('test-callback')).toBe(true);
@@ -148,8 +155,8 @@ describe('MemoryManager', () => {
     });
 
     it('should execute cleanup callbacks', async () => {
-      const callback1 = jest.fn<CleanupCallback>().mockResolvedValue(100);
-      const callback2 = jest.fn<CleanupCallback>().mockResolvedValue(200);
+      const callback1 = vi.fn<CleanupCallback>().mockResolvedValue(100);
+      const callback2 = vi.fn<CleanupCallback>().mockResolvedValue(200);
       
       memoryManager.registerCleanupCallback('callback1', callback1);
       memoryManager.registerCleanupCallback('callback2', callback2);
@@ -164,8 +171,8 @@ describe('MemoryManager', () => {
     });
 
     it('should handle callback errors gracefully', async () => {
-      const errorCallback = jest.fn<CleanupCallback>().mockRejectedValue(new Error('Cleanup failed'));
-      const successCallback = jest.fn<CleanupCallback>().mockResolvedValue(100);
+      const errorCallback = vi.fn<CleanupCallback>().mockRejectedValue(new Error('Cleanup failed'));
+      const successCallback = vi.fn<CleanupCallback>().mockResolvedValue(100);
       
       memoryManager.registerCleanupCallback('error-callback', errorCallback);
       memoryManager.registerCleanupCallback('success-callback', successCallback);
@@ -215,7 +222,7 @@ describe('MemoryManager', () => {
         defaultConversationConfig
       );
 
-      const callback = jest.fn<CleanupCallback>().mockResolvedValue(50);
+      const callback = vi.fn<CleanupCallback>().mockResolvedValue(50);
       testManager.registerCleanupCallback('test', callback);
 
       const result = await testManager.cleanup(false); // Don't force, but threshold should trigger
@@ -241,7 +248,7 @@ describe('MemoryManager', () => {
         defaultConversationConfig
       );
 
-      const callback = jest.fn<CleanupCallback>().mockResolvedValue(100);
+      const callback = vi.fn<CleanupCallback>().mockResolvedValue(100);
       testManager.registerCleanupCallback('emergency', callback);
 
       const wasTriggered = await testManager.checkEmergencyCleanup();
@@ -262,7 +269,7 @@ describe('MemoryManager', () => {
     it('should attempt forced garbage collection when available', () => {
       // Mock global.gc
       const originalGc = global.gc;
-      global.gc = jest.fn() as any;
+      global.gc = vi.fn() as any;
 
       const result = memoryManager.forceGarbageCollection();
       expect(result).toBe(true);
@@ -298,7 +305,7 @@ describe('MemoryManager', () => {
     });
 
     it('should publish cleanup completion events', async () => {
-      const callback = jest.fn<CleanupCallback>().mockResolvedValue(50);
+      const callback = vi.fn<CleanupCallback>().mockResolvedValue(50);
       memoryManager.registerCleanupCallback('test', callback);
       
       await memoryManager.cleanup(true);
