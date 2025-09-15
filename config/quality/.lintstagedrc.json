@@ -1,0 +1,8 @@
+{
+  "*.{ts,js,tsx,jsx}": [
+    "eslint --config config/quality/.eslintrc.json --fix",
+    "prettier --config config/quality/.prettierrc.json --write"
+  ],
+  "*.{json,md,yml,yaml}": ["prettier --config config/quality/.prettierrc.json --write"],
+  "*.md": ["markdownlint --config config/quality/.markdownlint.json --fix"]
+}

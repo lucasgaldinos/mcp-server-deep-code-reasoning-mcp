@@ -1,0 +1,230 @@
+{
+  "timestamp": "2025-09-11T21:10:06.356Z",
+  "overallScore": 60,
+  "totalChecks": 10,
+  "passedChecks": 6,
+  "failedChecks": 4,
+  "categorySummary": {
+    "authentication": {
+      "passed": 1,
+      "total": 2,
+      "score": 50
+    },
+    "authorization": {
+      "passed": 0,
+      "total": 0,
+      "score": 100
+    },
+    "data-protection": {
+      "passed": 0,
+      "total": 2,
+      "score": 0
+    },
+    "network": {
+      "passed": 1,
+      "total": 2,
+      "score": 50
+    },
+    "code-security": {
+      "passed": 2,
+      "total": 2,
+      "score": 100
+    },
+    "deployment": {
+      "passed": 2,
+      "total": 2,
+      "score": 100
+    }
+  },
+  "criticalIssues": [
+    {
+      "passed": false,
+      "details": "Found 2 potential security issues",
+      "evidence": [
+        "Hardcoded API key found in /home/lucas_galdino/repositories/mcp_servers/mcp-server-deep-code-reasoning-mcp/src/__tests__/EnvironmentValidator.test.ts",
+        "Hardcoded API key found in /home/lucas_galdino/repositories/mcp_servers/mcp-server-deep-code-reasoning-mcp/src/__tests__/basic.test.ts"
+      ],
+      "recommendations": [
+        "Remove hardcoded credentials",
+        "Use environment variables",
+        "Review git history for exposed keys"
+      ]
+    },
+    {
+      "passed": false,
+      "details": "Found 1 input validation gaps",
+      "evidence": [
+        "Missing validation method: sanitizeInput"
+      ],
+      "recommendations": [
+        "Implement missing validation methods",
+        "Add Zod schema validation",
+        "Add input sanitization"
+      ]
+    }
+  ],
+  "allResults": [
+    {
+      "id": "AUTH-001",
+      "category": "authentication",
+      "severity": "critical",
+      "description": "API key security validation",
+      "remediation": "Ensure API keys are never hardcoded and use secure environment variable management",
+      "result": {
+        "passed": false,
+        "details": "Found 2 potential security issues",
+        "evidence": [
+          "Hardcoded API key found in /home/lucas_galdino/repositories/mcp_servers/mcp-server-deep-code-reasoning-mcp/src/__tests__/EnvironmentValidator.test.ts",
+          "Hardcoded API key found in /home/lucas_galdino/repositories/mcp_servers/mcp-server-deep-code-reasoning-mcp/src/__tests__/basic.test.ts"
+        ],
+        "recommendations": [
+          "Remove hardcoded credentials",
+          "Use environment variables",
+          "Review git history for exposed keys"
+        ]
+      }
+    },
+    {
+      "id": "AUTH-002",
+      "category": "authentication",
+      "severity": "high",
+      "description": "Environment variable protection",
+      "remediation": "Use .env.example templates and ensure .env files are gitignored",
+      "result": {
+        "passed": true,
+        "details": "Environment variable protection properly configured",
+        "evidence": [],
+        "recommendations": []
+      }
+    },
+    {
+      "id": "DATA-001",
+      "category": "data-protection",
+      "severity": "critical",
+      "description": "Input validation and sanitization",
+      "remediation": "Implement comprehensive input validation using Zod schemas and sanitization",
+      "result": {
+        "passed": false,
+        "details": "Found 1 input validation gaps",
+        "evidence": [
+          "Missing validation method: sanitizeInput"
+        ],
+        "recommendations": [
+          "Implement missing validation methods",
+          "Add Zod schema validation",
+          "Add input sanitization"
+        ]
+      }
+    },
+    {
+      "id": "DATA-002",
+      "category": "data-protection",
+      "severity": "high",
+      "description": "Prompt injection protection",
+      "remediation": "Use PromptSanitizer for all user inputs sent to AI models",
+      "result": {
+        "passed": false,
+        "details": "Found 1 prompt security gaps",
+        "evidence": [
+          "Missing sanitization method: detectInjection"
+        ],
+        "recommendations": [
+          "Implement missing sanitization methods",
+          "Add injection detection",
+          "Test with malicious prompts"
+        ]
+      }
+    },
+    {
+      "id": "NET-001",
+      "category": "network",
+      "severity": "high",
+      "description": "HTTPS/TLS configuration",
+      "remediation": "Ensure all external API calls use HTTPS and validate certificates",
+      "result": {
+        "passed": false,
+        "details": "Found 1 TLS security issues",
+        "evidence": [
+          "TLS certificate validation may be disabled in /home/lucas_galdino/repositories/mcp_servers/mcp-server-deep-code-reasoning-mcp/src/security/security-audit-framework.ts"
+        ],
+        "recommendations": [
+          "Use HTTPS for all external calls",
+          "Enable certificate validation",
+          "Update insecure URLs"
+        ]
+      }
+    },
+    {
+      "id": "NET-002",
+      "category": "network",
+      "severity": "medium",
+      "description": "Rate limiting implementation",
+      "remediation": "Implement rate limiting for API calls and user requests",
+      "result": {
+        "passed": true,
+        "details": "Rate limiting implementation detected",
+        "recommendations": []
+      }
+    },
+    {
+      "id": "CODE-001",
+      "category": "code-security",
+      "severity": "high",
+      "description": "Dependency vulnerability scan",
+      "remediation": "Run npm audit and update vulnerable dependencies",
+      "result": {
+        "passed": true,
+        "details": "No dependency vulnerabilities found",
+        "evidence": [],
+        "recommendations": []
+      }
+    },
+    {
+      "id": "CODE-002",
+      "category": "code-security",
+      "severity": "medium",
+      "description": "Code quality and static analysis",
+      "remediation": "Use ESLint security rules and TypeScript strict mode",
+      "result": {
+        "passed": true,
+        "details": "Code quality configuration secure",
+        "evidence": [],
+        "recommendations": []
+      }
+    },
+    {
+      "id": "DEPLOY-001",
+      "category": "deployment",
+      "severity": "critical",
+      "description": "Container security configuration",
+      "remediation": "Use non-root users, minimal base images, and security scanning",
+      "result": {
+        "passed": true,
+        "details": "Container security properly configured",
+        "evidence": [],
+        "recommendations": []
+      }
+    },
+    {
+      "id": "DEPLOY-002",
+      "category": "deployment",
+      "severity": "high",
+      "description": "Secrets management",
+      "remediation": "Use Kubernetes secrets or cloud secret managers for production",
+      "result": {
+        "passed": true,
+        "details": "Secrets management properly configured",
+        "evidence": [],
+        "recommendations": []
+      }
+    }
+  ],
+  "recommendations": [
+    "🚨 CRITICAL: Overall security score below 70% - immediate action required",
+    "🔴 Address 2 critical security issues immediately",
+    "🟡 Address 2 high priority security issues",
+    "📋 Improve authentication security: 1 issues found",
+    "📋 Improve data-protection security: 2 issues found",
+    "📋 Improve network security: 1 issues found"
+  ]
+}

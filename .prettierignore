@@ -1,0 +1,22 @@
+# Ignore generated files and dependencies
+node_modules/
+dist/
+build/
+coverage/
+*.d.ts
+
+# Ignore disabled test files
+src/__tests__/disabled/
+
+# Ignore config files
+config/
+.env*
+.npmrc
+
+# Ignore specific files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+*.log
+.git/
+.DS_Store

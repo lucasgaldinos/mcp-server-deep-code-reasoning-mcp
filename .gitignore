@@ -31,7 +31,6 @@ build/
 coverage/
 .nyc_output/
 *.lcov
-*
 
 # Logs
 logs/

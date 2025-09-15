@@ -1,25 +1,25 @@
 {
-    "extends": "../tsconfig.json",
+    "extends": "../config/build/tsconfig.json",
     "compilerOptions": {
-        "baseUrl": "..",
+        "baseUrl": "../src",
         "paths": {
-            "@src/*": [
-                "../src/*"
-            ],
-            "@models/*": [
-                "../src/models/*"
-            ],
-            "@services/*": [
-                "../src/services/*"
-            ],
-            "@utils/*": [
-                "../src/utils/*"
+            "@/*": [
+                "./*"
             ],
             "@analyzers/*": [
-                "../src/analyzers/*"
+                "./analyzers/*"
+            ],
+            "@services/*": [
+                "./services/*"
+            ],
+            "@utils/*": [
+                "./utils/*"
+            ],
+            "@models/*": [
+                "./models/*"
             ],
             "@errors/*": [
-                "../src/errors/*"
+                "./errors/*"
             ]
         }
     },

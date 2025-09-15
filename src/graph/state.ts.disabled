@@ -1,0 +1,9 @@
+import { BaseMessage } from '@langchain/core/messages';
+import { AnalysisResult, AnalysisProvider } from '@models/types.js';
+
+export interface AnalysisState {
+  messages: BaseMessage[];
+  analysisResult?: AnalysisResult;
+  provider: AnalysisProvider;
+  error?: string;
+}

@@ -1,0 +1,29 @@
+{
+  "timestamp": "2025-09-11T21:12:00.703Z",
+  "summary": {
+    "totalOperations": 3,
+    "averageDuration": 136.17841733333339,
+    "p95Duration": 252.068575,
+    "p99Duration": 252.068575,
+    "memoryEfficiency": 34.26769309668213,
+    "cacheHitRatio": 100
+  },
+  "bottlenecks": [
+    {
+      "operation": "gemini",
+      "averageDuration": 252.068575,
+      "occurrences": 1,
+      "recommendation": "Optimize operation performance"
+    }
+  ],
+  "cacheStats": {
+    "hits": 1,
+    "misses": 0,
+    "keys": 1,
+    "hitRate": 100
+  },
+  "recommendations": [
+    "🧠 Memory efficiency below 60% - investigate memory leaks or optimize data structures",
+    "🎯 1 performance bottlenecks identified - focus on slowest operations first"
+  ]
+}

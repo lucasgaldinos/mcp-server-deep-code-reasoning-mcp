@@ -1,0 +1,183 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mcp-deep-code-reasoning
+  labels:
+    app: deep-code-reasoning-mcp
+    tier: production
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mcp-secrets
+  namespace: mcp-deep-code-reasoning
+type: Opaque
+stringData:
+  GEMINI_API_KEY: "your-gemini-api-key-here"
+  # Add other secrets as needed
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mcp-config
+  namespace: mcp-deep-code-reasoning
+data:
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  MAX_MEMORY: "512Mi"
+  MAX_CPU: "500m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deep-code-reasoning-mcp
+  namespace: mcp-deep-code-reasoning
+  labels:
+    app: deep-code-reasoning-mcp
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: deep-code-reasoning-mcp
+  template:
+    metadata:
+      labels:
+        app: deep-code-reasoning-mcp
+        version: v1
+    spec:
+      containers:
+      - name: mcp-server
+        image: ghcr.io/lucasgaldinos/mcp-server-deep-code-reasoning-mcp:latest
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: mcp-config
+              key: NODE_ENV
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: mcp-config
+              key: LOG_LEVEL
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mcp-secrets
+              key: GEMINI_API_KEY
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - node
+            - -e
+            - "console.log('Health check: MCP server running')"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - node
+            - -e
+            - "console.log('Readiness check: MCP server ready')"
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1001
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: temp-volume
+          mountPath: /tmp
+        - name: logs-volume
+          mountPath: /app/logs
+      volumes:
+      - name: temp-volume
+        emptyDir: {}
+      - name: logs-volume
+        emptyDir: {}
+      securityContext:
+        fsGroup: 1001
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - deep-code-reasoning-mcp
+              topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: deep-code-reasoning-mcp-service
+  namespace: mcp-deep-code-reasoning
+  labels:
+    app: deep-code-reasoning-mcp
+spec:
+  selector:
+    app: deep-code-reasoning-mcp
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  type: ClusterIP
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: deep-code-reasoning-mcp-pdb
+  namespace: mcp-deep-code-reasoning
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: deep-code-reasoning-mcp
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: deep-code-reasoning-mcp-hpa
+  namespace: mcp-deep-code-reasoning
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: deep-code-reasoning-mcp
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

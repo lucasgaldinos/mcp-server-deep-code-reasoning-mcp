@@ -1,0 +1,632 @@
+/**
+ * Conversational Deep Analysis Service
+ * 
+ * Research Finding: "Conversational analysis enables deep multi-turn reasoning sessions"
+ * Source: Deep research on multi-model orchestration patterns
+ * 
+ * This service implements the conversational analysis pattern that differentiates
+ * our MCP server from static analysis tools like Sourcegraph or GitHub Copilot.
+ */
+
+import { ApiManager, Provider } from '@services/ApiManager.js';
+import { ClaudeCodeContext, AnalysisResult } from '@models/types.js';
+import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
+import { ApiError } from '@errors/index.js';
+
+export interface ConversationSession {
+  id: string;
+  context: ClaudeCodeContext;
+  messages: BaseMessage[];
+  analysisDepth: number;
+  insights: Array<{
+    insight: string;
+    confidence: number;
+    timestamp: number;
+    provider: string;
+  }>;
+  startTime: number;
+  lastActivity: number;
+  metadata: {
+    totalTurns: number;
+    providersUsed: string[];
+    topicsExplored: string[];
+    complexity: 'shallow' | 'moderate' | 'deep' | 'expert';
+  };
+}
+
+export interface ConversationResult {
+  sessionId: string;
+  response: string;
+  newInsights: any[];
+  confidence: number;
+  suggestedFollowups: string[];
+  analysisProgress: {
+    currentDepth: number;
+    maxDepth: number;
+    coverage: number;
+    quality: number;
+  };
+}
+
+/**
+ * Research Pattern: Long-context conversational analysis for complex reasoning
+ * 
+ * Unlike static analyzers, this enables iterative refinement and exploration
+ * of complex issues through multi-turn conversations.
+ */
+export class ConversationalAnalysisService {
+  private apiManager: ApiManager;
+  private activeSessions: Map<string, ConversationSession> = new Map();
+  private readonly MAX_SESSION_AGE = 30 * 60 * 1000; // 30 minutes
+  private readonly MAX_CONVERSATION_DEPTH = 20;
+
+  constructor(apiManager: ApiManager) {
+    this.apiManager = apiManager;
+    this.startSessionCleanup();
+  }
+
+  /**
+   * Start a new conversational analysis session
+   * Research Pattern: Initialize with context-aware prompting
+   */
+  async startConversation(
+    context: ClaudeCodeContext,
+    initialQuestion: string
+  ): Promise<ConversationResult> {
+    const sessionId = this.generateSessionId();
+    
+    // Build context-aware initial prompt
+    const initialPrompt = this.buildInitialAnalysisPrompt(context, initialQuestion);
+    
+    // Research Finding: Use Gemini for long-context reasoning
+    const initialResponse = await this.apiManager.analyzeWithProvider(
+      Provider.GEMINI,
+      initialPrompt,
+      { 
+        maxTokens: 8192, 
+        temperature: 0.1 // Low temperature for analytical consistency
+      }
+    );
+
+    const session: ConversationSession = {
+      id: sessionId,
+      context,
+      messages: [
+        new HumanMessage(initialQuestion),
+        new AIMessage(initialResponse.result)
+      ],
+      analysisDepth: 1,
+      insights: [
+        {
+          insight: this.extractKeyInsight(initialResponse.result),
+          confidence: initialResponse.confidence,
+          timestamp: Date.now(),
+          provider: 'gemini'
+        }
+      ],
+      startTime: Date.now(),
+      lastActivity: Date.now(),
+      metadata: {
+        totalTurns: 1,
+        providersUsed: ['gemini'],
+        topicsExplored: [this.extractTopic(initialQuestion)],
+        complexity: this.assessComplexity(context, initialQuestion)
+      }
+    };
+
+    this.activeSessions.set(sessionId, session);
+
+    return {
+      sessionId,
+      response: initialResponse.result,
+      newInsights: session.insights,
+      confidence: initialResponse.confidence,
+      suggestedFollowups: this.generateFollowupQuestions(initialResponse.result, context),
+      analysisProgress: this.calculateAnalysisProgress(session)
+    };
+  }
+
+  /**
+   * Continue an existing conversation
+   * Research Pattern: Multi-turn reasoning with context preservation
+   */
+  async continueConversation(
+    sessionId: string,
+    message: string
+  ): Promise<ConversationResult> {
+    const session = this.activeSessions.get(sessionId);
+    if (!session) {
+      throw new ApiError('Session not found or expired', 'SESSION_NOT_FOUND');
+    }
+
+    // Update session activity
+    session.lastActivity = Date.now();
+    session.metadata.totalTurns++;
+
+    // Build conversational prompt with full history
+    const conversationalPrompt = this.buildConversationalPrompt(session, message);
+    
+    // Research Pattern: Use different models for different analysis depths
+    const provider = this.selectProviderForDepth(session.analysisDepth);
+    
+    const response = await this.apiManager.analyzeWithProvider(
+      provider,
+      conversationalPrompt,
+      this.getProviderSettings(provider, session.analysisDepth)
+    );
+
+    // Update session with new exchange
+    session.messages.push(new HumanMessage(message));
+    session.messages.push(new AIMessage(response.result));
+    session.analysisDepth++;
+
+    // Extract and store new insights
+    const newInsight = this.extractKeyInsight(response.result);
+    if (newInsight && !this.isDuplicateInsight(newInsight, session.insights)) {
+      session.insights.push({
+        insight: newInsight,
+        confidence: response.confidence,
+        timestamp: Date.now(),
+        provider: provider.toLowerCase()
+      });
+    }
+
+    // Update metadata
+    if (!session.metadata.providersUsed.includes(provider.toLowerCase())) {
+      session.metadata.providersUsed.push(provider.toLowerCase());
+    }
+
+    const newTopic = this.extractTopic(message);
+    if (newTopic && !session.metadata.topicsExplored.includes(newTopic)) {
+      session.metadata.topicsExplored.push(newTopic);
+    }
+
+    // Update complexity assessment
+    session.metadata.complexity = this.updateComplexity(session);
+
+    return {
+      sessionId,
+      response: response.result,
+      newInsights: session.insights.slice(-1), // Just the new insight
+      confidence: response.confidence,
+      suggestedFollowups: this.generateFollowupQuestions(response.result, session.context),
+      analysisProgress: this.calculateAnalysisProgress(session)
+    };
+  }
+
+  /**
+   * Get conversation status and summary
+   */
+  async getConversationStatus(sessionId: string): Promise<any> {
+    const session = this.activeSessions.get(sessionId);
+    if (!session) {
+      throw new ApiError('Session not found', 'SESSION_NOT_FOUND');
+    }
+
+    return {
+      sessionId,
+      status: 'active',
+      duration: Date.now() - session.startTime,
+      analysisDepth: session.analysisDepth,
+      totalInsights: session.insights.length,
+      topics: session.metadata.topicsExplored,
+      complexity: session.metadata.complexity,
+      progress: this.calculateAnalysisProgress(session),
+      summary: this.generateSessionSummary(session)
+    };
+  }
+
+  /**
+   * Finalize conversation and generate comprehensive summary
+   * Research Pattern: Consensus building from conversational insights
+   */
+  async finalizeConversation(
+    sessionId: string,
+    summaryFormat: 'detailed' | 'concise' | 'actionable' = 'detailed'
+  ): Promise<AnalysisResult> {
+    const session = this.activeSessions.get(sessionId);
+    if (!session) {
+      throw new ApiError('Session not found', 'SESSION_NOT_FOUND');
+    }
+
+    // Build final synthesis prompt
+    const synthesisPrompt = this.buildSynthesisPrompt(session, summaryFormat);
+    
+    // Use highest-quality model for final synthesis
+    const finalSynthesis = await this.apiManager.analyzeWithProvider(
+      Provider.GEMINI,
+      synthesisPrompt,
+      { 
+        maxTokens: 12288, 
+        temperature: 0.05 // Very low for consistent synthesis
+      }
+    );
+
+    // Clean up session
+    this.activeSessions.delete(sessionId);
+
+    return {
+      analysis: finalSynthesis.result,
+      confidence: this.calculateFinalConfidence(session),
+      reasoning: this.buildReasoningChain(session),
+      recommendations: this.extractRecommendations(finalSynthesis.result),
+      metadata: {
+        sessionId,
+        conversationTurns: session.metadata.totalTurns,
+        analysisDepth: session.analysisDepth,
+        insightsGenerated: session.insights.length,
+        topicsExplored: session.metadata.topicsExplored,
+        complexity: session.metadata.complexity,
+        duration: Date.now() - session.startTime,
+        providersUsed: session.metadata.providersUsed,
+        provider: 'conversational_analysis'
+      }
+    };
+  }
+
+  /**
+   * Research Pattern: Context-aware initial prompting
+   */
+  private buildInitialAnalysisPrompt(context: ClaudeCodeContext, question: string): string {
+    return `# Deep Conversational Code Analysis
+
+## Analysis Context
+**Files Under Investigation:** ${context.focusArea.files.join(', ')}
+**Entry Points:** ${context.focusArea.entryPoints?.map(ep => `${ep.file}:${ep.line}`).join(', ') || 'None specified'}
+**Previous Attempts:** ${context.attemptedApproaches.join(', ')}
+**Current Challenges:** ${context.stuckPoints.join(', ')}
+
+## Initial Question
+${question}
+
+## Analysis Approach
+This is the start of a deep, conversational analysis. Please:
+
+1. **Analyze the Question:** Understand what's being asked and why it's challenging
+2. **Context Assessment:** Evaluate the provided code context and identify key areas
+3. **Initial Findings:** Share your initial observations and hypotheses
+4. **Deep Dive Preparation:** Identify what needs deeper investigation
+5. **Conversation Direction:** Suggest productive directions for continued analysis
+
+## Response Guidelines
+- Be thorough but conversational
+- Ask clarifying questions if the context is ambiguous
+- Identify specific areas that need deeper exploration
+- Provide actionable insights even in this initial response
+- Set up the foundation for a productive analytical conversation
+
+Remember: This is the beginning of an iterative analysis, not a one-shot answer. Focus on understanding and establishing a strong foundation for deeper exploration.`;
+  }
+
+  /**
+   * Research Pattern: Multi-turn reasoning with context preservation
+   */
+  private buildConversationalPrompt(session: ConversationSession, newMessage: string): string {
+    const recentMessages = session.messages.slice(-6); // Keep recent context manageable
+    const conversationHistory = recentMessages
+      .map(msg => `**${msg._getType()}**: ${msg.content}`)
+      .join('\n\n');
+
+    const insights = session.insights.slice(-3) // Recent insights
+      .map(insight => `- ${insight.insight} (${insight.confidence.toFixed(2)} confidence, ${insight.provider})`)
+      .join('\n');
+
+    return `# Continuing Deep Code Analysis
+
+## Current Analysis Context
+**Session ID:** ${session.id}
+**Analysis Depth:** ${session.analysisDepth}
+**Topics Explored:** ${session.metadata.topicsExplored.join(', ')}
+**Current Complexity:** ${session.metadata.complexity}
+
+## Key Insights So Far
+${insights}
+
+## Recent Conversation
+${conversationHistory}
+
+## New Question/Direction
+**Human**: ${newMessage}
+
+## Continuation Guidelines
+Please continue this analytical conversation by:
+
+1. **Building on Previous Insights:** Reference and build upon what we've already discovered
+2. **Addressing the New Question:** Directly respond to the new input or direction
+3. **Deepening Analysis:** Go deeper into the technical details based on our conversation history
+4. **Connecting Insights:** Show how new findings relate to previous discoveries
+5. **Maintaining Thread:** Keep the analytical thread coherent and progressive
+
+## Analysis Context (Reference)
+**Files:** ${session.context.focusArea.files.join(', ')}
+**Entry Points:** ${session.context.focusArea.entryPoints?.map(ep => `${ep.file}:${ep.line}`).join(', ') || 'None'}
+**Challenges:** ${session.context.stuckPoints.join(', ')}
+
+Respond as if you're a senior architect who has been deeply engaged in understanding this codebase and is now building on previous analysis to go even deeper.`;
+  }
+
+  /**
+   * Research Pattern: Specialized model selection based on analysis depth
+   */
+  private selectProviderForDepth(depth: number): Provider {
+    if (depth <= 3) return Provider.GEMINI; // Long context for initial exploration
+    if (depth <= 8) return Provider.OPENAI; // Balanced reasoning for middle phase
+    return Provider.GEMINI; // Back to long context for complex synthesis
+  }
+
+  private getProviderSettings(provider: Provider, depth: number): any {
+    const baseSettings = {
+      temperature: Math.max(0.05, 0.3 - (depth * 0.02)), // Decrease temperature with depth
+    };
+
+    switch (provider) {
+      case Provider.GEMINI:
+        return { ...baseSettings, maxTokens: 8192 };
+      case Provider.OPENAI:
+        return { ...baseSettings, maxTokens: 4096 };
+      default:
+        return { ...baseSettings, maxTokens: 2048 };
+    }
+  }
+
+  /**
+   * Research Pattern: Final synthesis from conversational insights
+   */
+  private buildSynthesisPrompt(session: ConversationSession, format: string): string {
+    const allInsights = session.insights
+      .map(insight => `- **${insight.provider.toUpperCase()}** (${insight.confidence.toFixed(2)}): ${insight.insight}`)
+      .join('\n');
+
+    const conversationSummary = this.generateSessionSummary(session);
+
+    const formatInstructions = {
+      detailed: "Provide a comprehensive, detailed analysis with full technical depth",
+      concise: "Provide a focused, concise summary highlighting key findings",
+      actionable: "Focus on actionable recommendations and next steps"
+    };
+
+    return `# Final Analysis Synthesis
+
+## Conversation Summary
+${conversationSummary}
+
+## All Generated Insights
+${allInsights}
+
+## Analysis Context
+**Files Analyzed:** ${session.context.focusArea.files.join(', ')}
+**Original Challenge:** ${session.context.stuckPoints.join(', ')}
+**Topics Covered:** ${session.metadata.topicsExplored.join(', ')}
+**Analysis Depth:** ${session.analysisDepth} turns
+**Complexity Level:** ${session.metadata.complexity}
+
+## Synthesis Task
+Create a final, authoritative analysis that synthesizes all insights from this ${session.metadata.totalTurns}-turn conversation.
+
+**Format Requirement:** ${formatInstructions[format as keyof typeof formatInstructions]}
+
+## Synthesis Guidelines
+1. **Integration:** Weave together all insights into a coherent narrative
+2. **Confidence Assessment:** Clearly indicate confidence levels for different conclusions
+3. **Reasoning Chain:** Show how the conversation led to the final conclusions
+4. **Recommendations:** Provide specific, actionable next steps
+5. **Knowledge Gaps:** Acknowledge what remains uncertain or needs further investigation
+
+## Output Structure
+- **Executive Summary:** Key findings in 2-3 sentences
+- **Detailed Analysis:** Full technical analysis based on conversation
+- **Evidence Base:** How conversation insights support conclusions
+- **Recommendations:** Specific actions to take
+- **Confidence Assessment:** Overall confidence and reasoning
+- **Next Steps:** Suggested follow-up analysis or actions
+
+Synthesize this conversation into the most valuable, actionable analysis possible.`;
+  }
+
+  // Utility and helper methods
+  private generateSessionId(): string {
+    return `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  private extractKeyInsight(response: string): string {
+    // Extract the most significant insight from the response
+    const sentences = response.split(/[.!?]+/).filter(s => s.trim().length > 20);
+    
+    // Look for sentences with analytical keywords
+    const insightKeywords = [
+      'appears', 'indicates', 'suggests', 'reveals', 'shows', 'demonstrates',
+      'likely', 'probable', 'hypothesis', 'pattern', 'root cause', 'bottleneck'
+    ];
+
+    for (const sentence of sentences) {
+      if (insightKeywords.some(keyword => sentence.toLowerCase().includes(keyword))) {
+        return sentence.trim();
+      }
+    }
+
+    // Fallback to first substantial sentence
+    return sentences[0]?.trim() || 'Analysis insight generated';
+  }
+
+  private extractTopic(message: string): string {
+    // Extract main topic/theme from message
+    const topics = ['performance', 'security', 'architecture', 'bug', 'error', 'design', 'pattern', 'refactor'];
+    
+    for (const topic of topics) {
+      if (message.toLowerCase().includes(topic)) {
+        return topic;
+      }
+    }
+    
+    // Default topic extraction
+    const words = message.toLowerCase().split(/\s+/).filter(w => w.length > 4);
+    return words[0] || 'general';
+  }
+
+  private assessComplexity(context: ClaudeCodeContext, question: string): 'shallow' | 'moderate' | 'deep' | 'expert' {
+    let complexity = 0;
+    
+    // Factor in file count
+    complexity += context.focusArea.files.length > 5 ? 2 : 1;
+    
+    // Factor in stuck points
+    complexity += context.stuckPoints.length;
+    
+    // Factor in question complexity
+    const complexKeywords = ['architecture', 'performance', 'security', 'distributed', 'async', 'concurrent'];
+    complexity += complexKeywords.filter(kw => question.toLowerCase().includes(kw)).length;
+
+    if (complexity <= 2) return 'shallow';
+    if (complexity <= 4) return 'moderate';
+    if (complexity <= 6) return 'deep';
+    return 'expert';
+  }
+
+  private updateComplexity(session: ConversationSession): 'shallow' | 'moderate' | 'deep' | 'expert' {
+    const factors = [
+      session.analysisDepth,
+      session.metadata.topicsExplored.length,
+      session.insights.length,
+      session.metadata.providersUsed.length
+    ];
+    
+    const totalComplexity = factors.reduce((sum, factor) => sum + factor, 0);
+    
+    if (totalComplexity <= 5) return 'shallow';
+    if (totalComplexity <= 10) return 'moderate';
+    if (totalComplexity <= 15) return 'deep';
+    return 'expert';
+  }
+
+  private isDuplicateInsight(newInsight: string, existingInsights: any[]): boolean {
+    const normalizedNew = newInsight.toLowerCase().replace(/\s+/g, ' ').trim();
+    
+    return existingInsights.some(existing => {
+      const normalizedExisting = existing.insight.toLowerCase().replace(/\s+/g, ' ').trim();
+      return this.calculateSimilarity(normalizedNew, normalizedExisting) > 0.7;
+    });
+  }
+
+  private calculateSimilarity(str1: string, str2: string): number {
+    const words1 = new Set(str1.split(' '));
+    const words2 = new Set(str2.split(' '));
+    const intersection = new Set([...words1].filter(x => words2.has(x)));
+    const union = new Set([...words1, ...words2]);
+    
+    return intersection.size / union.size;
+  }
+
+  private generateFollowupQuestions(response: string, context: ClaudeCodeContext): string[] {
+    // Generate intelligent follow-up questions based on the response
+    const followups = [];
+    
+    if (response.toLowerCase().includes('performance')) {
+      followups.push("What are the specific performance bottlenecks you identified?");
+    }
+    
+    if (response.toLowerCase().includes('error') || response.toLowerCase().includes('exception')) {
+      followups.push("Can you trace the error propagation path through the system?");
+    }
+    
+    if (response.toLowerCase().includes('architecture') || response.toLowerCase().includes('design')) {
+      followups.push("How does this architectural choice affect other parts of the system?");
+    }
+    
+    if (context.focusArea.files.length > 1) {
+      followups.push("Which file contains the most critical part of this issue?");
+    }
+    
+    // Always include these generic but useful followups
+    followups.push("What would you investigate next to validate this analysis?");
+    followups.push("Are there any edge cases or scenarios we haven't considered?");
+    
+    return followups.slice(0, 4); // Limit to 4 suggestions
+  }
+
+  private calculateAnalysisProgress(session: ConversationSession): any {
+    const maxDepth = this.MAX_CONVERSATION_DEPTH;
+    const currentDepth = session.analysisDepth;
+    
+    // Calculate coverage based on topics explored vs. potential topics
+    const potentialTopics = ['architecture', 'performance', 'security', 'bugs', 'design', 'patterns'];
+    const coverage = session.metadata.topicsExplored.length / potentialTopics.length;
+    
+    // Calculate quality based on insights per turn
+    const quality = session.insights.length / session.metadata.totalTurns;
+    
+    return {
+      currentDepth,
+      maxDepth,
+      coverage: Math.min(1, coverage),
+      quality: Math.min(1, quality)
+    };
+  }
+
+  private generateSessionSummary(session: ConversationSession): string {
+    const duration = Math.round((Date.now() - session.startTime) / 1000 / 60); // minutes
+    
+    return `**Conversation Overview:**
+- Duration: ${duration} minutes
+- Analysis Depth: ${session.analysisDepth} turns
+- Insights Generated: ${session.insights.length}
+- Topics Explored: ${session.metadata.topicsExplored.join(', ')}
+- Complexity Level: ${session.metadata.complexity}
+- Providers Used: ${session.metadata.providersUsed.join(', ')}`;
+  }
+
+  private calculateFinalConfidence(session: ConversationSession): number {
+    const insightConfidences = session.insights.map(i => i.confidence);
+    const avgConfidence = insightConfidences.reduce((sum, c) => sum + c, 0) / insightConfidences.length || 0.5;
+    
+    // Boost confidence for deeper analysis and multiple insights
+    const depthBoost = Math.min(0.2, session.analysisDepth * 0.02);
+    const insightBoost = Math.min(0.15, session.insights.length * 0.03);
+    
+    return Math.min(0.95, avgConfidence + depthBoost + insightBoost);
+  }
+
+  private buildReasoningChain(session: ConversationSession): string {
+    return `Conversational Analysis Chain:
+1. Started with ${session.metadata.complexity} complexity question
+2. Conducted ${session.metadata.totalTurns} analytical turns
+3. Explored ${session.metadata.topicsExplored.length} distinct topics: ${session.metadata.topicsExplored.join(', ')}
+4. Generated ${session.insights.length} key insights using ${session.metadata.providersUsed.join(', ')}
+5. Achieved ${session.analysisDepth} depth levels through iterative refinement
+6. Synthesized findings into actionable conclusions`;
+  }
+
+  private extractRecommendations(analysis: string): string[] {
+    const recommendations = [];
+    const lines = analysis.split('\n');
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.toLowerCase().includes('recommend') || 
+          trimmed.toLowerCase().includes('should') || 
+          trimmed.toLowerCase().includes('next step') ||
+          trimmed.match(/^\d+\./)) { // Numbered recommendations
+        recommendations.push(trimmed);
+      }
+    }
+    
+    return recommendations.length > 0 ? recommendations.slice(0, 5) : [
+      'Review the conversation insights for actionable next steps',
+      'Consider implementing the highest-confidence recommendations first',
+      'Validate findings through targeted testing or code review'
+    ];
+  }
+
+  /**
+   * Cleanup expired sessions
+   */
+  private startSessionCleanup(): void {
+    setInterval(() => {
+      const now = Date.now();
+      for (const [sessionId, session] of this.activeSessions.entries()) {
+        if (now - session.lastActivity > this.MAX_SESSION_AGE) {
+          this.activeSessions.delete(sessionId);
+        }
+      }
+    }, 5 * 60 * 1000); // Check every 5 minutes
+  }
+}
