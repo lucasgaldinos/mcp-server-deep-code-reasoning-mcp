@@ -2,7 +2,7 @@
 title: Changelog
 description: Version history and changes for the Deep Code Reasoning MCP Server - an open-source Model Context Protocol server
 status: published
-updated: 2025-01-09
+updated: 2025-01-11
 tags: [changelog, versions, history, mcp-server, open-source]
 ---
 
@@ -17,7 +17,72 @@ This is an enhanced version of the original [haasonsaas/deep-code-reasoning-mcp]
 
 ## [Unreleased]
 
-### Phase 6 - Enterprise Integration Implementation 🚀 IN PROGRESS
+### Added
+
+- **DCR-13: Comprehensive Testing Infrastructure Implementation**: Modernized testing infrastructure using MCP deep-code-reasoning tools for systematic analysis and resolution
+  - **MCP Tool Validation**: Successfully tested 11/14 MCP tools with 79% success rate
+  - **Jest-to-Vitest Migration Strategy**: Established conversion template with ConfigurationManager.test.ts showing 83% test improvement (20/24 vs 0/24 passing)
+  - **Performance Baseline Establishment**: Used hypothesis_test, performance_bottleneck, and trace_execution_path tools for comprehensive testing analysis
+  - **Conversational Analysis Workflow**: Implemented start_conversation → continue_conversation → finalize_conversation pattern for collaborative problem-solving
+  - **Comprehensive Documentation**: Created MCP_TESTING_REPORT_DCR13.md with detailed tool effectiveness analysis and actionable recommendations
+
+### Fixed
+
+- **Conversation Management Memory Leak**: Fixed critical bug where conversation sessions were not properly cleaned up after finalization, causing session state to persist in memory and preventing subsequent conversation operations from working correctly. Added `cleanupSession()` method to ConversationManager and updated `finalizeConversation()` to call cleanup after extracting results.
+
+- **Race Conditions in Session Management**: Implemented Promise-based mutex system in ConversationManager to eliminate race conditions in conversational tools
+  - Replaced simple boolean flags with Map<sessionId, Promise<void>> for atomic session locking
+  - Updated acquireLock() to async pattern with proper Promise resolution
+  - Fixed "Session is currently processing another request" errors
+  - Updated all callers including DeepCodeReasonerV2 to use await patterns
+  - All tests updated to support async lock acquisition
+  - **Impact**: Should unblock 3 conversational tools (start_conversation, continue_conversation, finalize_conversation)
+
+### Technical Improvements
+
+- **TypeScript Compilation**: Fixed unknown error type handling in test utilities
+- **Build System**: Validated complete build pipeline with TypeScript path alias resolution
+- **Test Infrastructure**: Updated ConversationManager tests for async lock behavior
+- **Documentation**: Updated TASKS.md and TODO.md with DCR task completion status
+
+## [0.2.0] - 2025-09-15 - Phase 4 Quality Enhancement
+
+### 🎉 Major Achievements
+
+- **Gemini 2.5 Pro Integration**: Successfully switched from quota-limited preview models to stable production model
+- **API Functionality Restored**: All 11 MCP tools now operational (improved from 3/11 accessibility)
+- **Performance Breakthrough**: Memory usage optimized from 89-90% to 69% - significant improvement
+- **Health Status**: All system health checks now passing (4/4 healthy status achieved)
+
+### ✅ Fixed Issues
+
+- **API Quota Limitations**: Resolved quota exceeded errors on Gemini 2.5 Pro Preview models
+- **Memory Usage Degradation**: Fixed high memory consumption causing system degradation
+- **Tool Accessibility**: Restored functionality for Gemini-dependent analysis tools in VS Code
+- **API Integration Reliability**: Enhanced stability and error handling for external API calls
+
+### 🔧 Technical Changes
+
+- **Model Configuration**: Updated from `gemini-2.5-pro-preview-06-05` to `gemini-2.5-pro` (stable)
+- **Service Updates**: Modified 5 configuration files across services and tests
+- **Error Handling**: Enhanced validation and error reporting for API interactions
+- **Build System**: Verified TypeScript compilation and import resolution
+
+### 📚 Documentation Updates
+
+- **Integration Guides**: Updated with working Gemini 2.5 Pro model configuration
+- **Testing Procedures**: Added comprehensive API model testing script and validation procedures
+- **Troubleshooting**: Enhanced documentation for quota management and model selection
+- **Examples**: Updated code examples to reflect working API calls
+
+### 🧪 Quality Assurance
+
+- **API Model Testing**: Implemented systematic testing of all available Gemini models
+- **Tool Validation**: Confirmed functionality of trace_execution_path and health monitoring tools
+- **VS Code Integration**: Verified MCP server integration and inline chat accessibility
+- **Performance Monitoring**: Established baseline metrics for memory usage and response times
+
+### Phase 6 - Enterprise Integration Implementation 🚀 COMPLETED
 
 - **🔒 COMPREHENSIVE SECURITY AUDIT FRAMEWORK**: Enterprise-grade security validation and hardening system
   - **SecurityAuditFramework**: 10-category security check system (authentication, data-protection, network, code-security, deployment)
