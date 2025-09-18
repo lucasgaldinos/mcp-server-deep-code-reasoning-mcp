@@ -368,9 +368,11 @@ function parseArguments(): ICLIOptions {
       case '-h':
         displayHelp();
         process.exit(0);
+        break;
       case '--help-patterns':
         NamingConventionsCLI.displayPatternHelp();
         process.exit(0);
+        break;
       default:
         if (arg.startsWith('-')) {
           console.error(`Unknown option: ${arg}`);

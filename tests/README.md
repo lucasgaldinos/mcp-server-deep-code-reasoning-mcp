@@ -63,11 +63,11 @@ npm test
 ### Integration Tests
 
 ```bash
-# Run specific integration test
-node tests/integration/quick-test.js
+# Run integration tests with real API
+npm run test:integration
 
-# Run all integration tests
-npm run test:integration  # (if configured)
+# Run all tests (unit + integration)
+npm run test:all
 ```
 
 ### Watch Mode
@@ -97,7 +97,7 @@ Tests are configured using:
 ### Test Organization
 
 - Keep unit tests close to source code (`src/__tests__/`)
-- Place integration tests in `tests/integration/`
+- Use vitest for all test execution (`npm test`, `npm run test:integration`)
 - Store test data and fixtures in `tests/fixtures/`
 - Group related tests in describe blocks
 

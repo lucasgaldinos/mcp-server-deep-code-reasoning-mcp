@@ -7,6 +7,9 @@ export interface IEnvironmentConfig {
   // Required configuration
   geminiApiKey: string;
 
+  // Optional multi-provider configuration
+  openaiApiKey?: string;
+
   // Server configuration
   nodeEnv: string;
   mcpServerName: string;
@@ -118,7 +121,7 @@ export class EnvironmentValidator {
     maxConcurrentRequests: 5,
 
     // Gemini AI defaults
-    geminiModel: 'gemini-2.5-pro-preview-06-05',
+    geminiModel: 'gemini-2.5-flash',
     geminiApiVersion: 'v1beta',
     geminiTemperature: 0.2,
     geminiTopK: 1,
@@ -292,6 +295,9 @@ export class EnvironmentValidator {
     return {
       // Required configuration
       geminiApiKey: process.env.GEMINI_API_KEY!,
+
+      // Optional multi-provider configuration
+      openaiApiKey: process.env.OPENAI_API_KEY,
 
       // Server configuration
       nodeEnv: this.getEnvVar('NODE_ENV', this.DEFAULT_CONFIG.nodeEnv!),

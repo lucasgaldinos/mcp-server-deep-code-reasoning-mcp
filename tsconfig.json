@@ -1,0 +1,26 @@
+{
+  "extends": "./config/build/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "@analyzers/*": [
+        "src/analyzers/*"
+      ],
+      "@services/*": [
+        "src/services/*"
+      ],
+      "@utils/*": [
+        "src/utils/*"
+      ],
+      "@models/*": [
+        "src/models/*"
+      ],
+      "@errors/*": [
+        "src/errors/*"
+      ]
+    }
+  }
+}

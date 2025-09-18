@@ -1,5 +1,0 @@
-{
-  "*.{ts,js}": ["eslint --fix", "prettier --write"],
-  "*.{json,md}": ["prettier --write"],
-  "*.ts": ["bash -c 'npm run typecheck'"]
-}

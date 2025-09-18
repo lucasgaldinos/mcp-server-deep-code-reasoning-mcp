@@ -33,6 +33,8 @@ export interface ConversationState {
 
 export class ConversationManager {
   private sessions: Map<string, ConversationState> = new Map();
+  private sessionLocks: Map<string, Promise<void>> = new Map();
+  private lockQueue: Map<string, Array<{ resolve: (value: boolean) => void; reject: (error: Error) => void }>> = new Map();
   private readonly SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
   private readonly MAX_TURNS = 50;
   private cleanupInterval?: NodeJS.Timeout;
@@ -88,8 +90,9 @@ export class ConversationManager {
   /**
    * Acquire an exclusive lock on a session for processing.
    * Returns true if lock was acquired, false otherwise.
+   * Uses queue-based atomic locking to prevent race conditions.
    */
-  acquireLock(sessionId: string): boolean {
+  async acquireLock(sessionId: string): Promise<boolean> {
     const session = this.sessions.get(sessionId);
     if (!session) {return false;}
 
@@ -100,23 +103,90 @@ export class ConversationManager {
     }
 
     // Only acquire lock if session is active
-    if (session.status === 'active') {
-      session.status = 'processing';
-      session.lastActivity = Date.now();
-      return true;
+    if (session.status !== 'active') {
+      return false;
     }
 
-    return false;
+    // Create queue-based atomic locking
+    return new Promise<boolean>((resolve, reject) => {
+      // Add to queue for this session
+      if (!this.lockQueue.has(sessionId)) {
+        this.lockQueue.set(sessionId, []);
+      }
+      
+      const queue = this.lockQueue.get(sessionId)!;
+      
+      // If this is the first in queue and no active lock, acquire immediately
+      if (queue.length === 0 && !this.sessionLocks.has(sessionId)) {
+        this.processingLock(sessionId, resolve, reject);
+      } else {
+        // Add to queue to wait for turn
+        queue.push({ resolve, reject });
+      }
+    });
+  }
+
+  /**
+   * Process lock acquisition atomically
+   */
+  private processingLock(sessionId: string, resolve: (value: boolean) => void, reject: (error: Error) => void): void {
+    const session = this.sessions.get(sessionId);
+    if (!session || session.status !== 'active') {
+      resolve(false);
+      this.processNextInQueue(sessionId);
+      return;
+    }
+
+    // Atomically set processing status and create lock
+    session.status = 'processing';
+    session.lastActivity = Date.now();
+    
+    // Create lock promise
+    let lockResolver: (() => void) | undefined;
+    const lockPromise = new Promise<void>((lockResolve) => {
+      lockResolver = lockResolve;
+    });
+    
+    // Store the resolver for releaseLock to call
+    (lockPromise as any).resolve = lockResolver!;
+    this.sessionLocks.set(sessionId, lockPromise);
+    
+    resolve(true);
+  }
+
+  /**
+   * Process the next lock request in queue
+   */
+  private processNextInQueue(sessionId: string): void {
+    const queue = this.lockQueue.get(sessionId);
+    if (!queue || queue.length === 0) {
+      this.lockQueue.delete(sessionId);
+      return;
+    }
+    
+    const next = queue.shift()!;
+    this.processingLock(sessionId, next.resolve, next.reject);
   }
 
   /**
    * Release the processing lock on a session.
+   * Resolves the Promise-based mutex and processes next in queue.
    */
   releaseLock(sessionId: string): void {
     const session = this.sessions.get(sessionId);
     if (session && session.status === 'processing') {
       session.status = 'active';
       session.lastActivity = Date.now();
+      
+      // Resolve the lock promise to release waiting operations
+      const lockPromise = this.sessionLocks.get(sessionId);
+      if (lockPromise && (lockPromise as any).resolve) {
+        (lockPromise as any).resolve();
+        this.sessionLocks.delete(sessionId);
+      }
+      
+      // Process next in queue
+      this.processNextInQueue(sessionId);
     }
   }
 
@@ -282,5 +352,16 @@ export class ConversationManager {
     return Array.from(this.sessions.values())
       .filter(s => s.status === 'active')
       .length;
+  }
+
+  /**
+   * Clean up a session after it's been finalized
+   */
+  cleanupSession(sessionId: string): void {
+    // Release any locks first
+    this.releaseLock(sessionId);
+    
+    // Remove from sessions map
+    this.sessions.delete(sessionId);
   }
 }

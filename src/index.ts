@@ -18,6 +18,9 @@ import { z } from 'zod';
 import * as dotenv from 'dotenv';
 
 import { DeepCodeReasonerV2 } from '@analyzers/DeepCodeReasonerV2.js';
+import { ApiManager, ApiManagerConfig, ApiProvider } from '@services/api-manager.js';
+import { GeminiService } from '@services/gemini-service.js';
+import { OpenAIService } from '@services/openai-service.js';
 import type { ClaudeCodeContext } from '@models/types.js';
 import { ErrorClassifier } from '@utils/error-classifier.js';
 import { InputValidator } from '@utils/input-validator.js';
@@ -72,10 +75,46 @@ const server = new Server(
   },
 );
 
-// Initialize deepReasoner as null if no API key
+// Initialize multi-provider system with fallback support
 let deepReasoner: DeepCodeReasonerV2 | null = null;
+let apiManager: ApiManager | null = null;
+
 if (GEMINI_API_KEY) {
+  // Initialize primary reasoning service
   deepReasoner = new DeepCodeReasonerV2(GEMINI_API_KEY);
+  
+  // Initialize multi-provider API manager
+  const providers: ApiProvider[] = [new GeminiService(GEMINI_API_KEY)];
+  
+  // Add OpenAI provider if API key is available
+  if (envConfig.openaiApiKey) {
+    providers.push(new OpenAIService({
+      apiKey: envConfig.openaiApiKey,
+      model: 'gpt-4-turbo-preview',
+      maxTokens: 4000,
+      temperature: 0.1,
+      timeout: 30000
+    }));
+    logger.info('Multi-provider support enabled: Gemini + OpenAI');
+  } else {
+    logger.info('Single-provider mode: Gemini only (add OPENAI_API_KEY for multi-provider support)');
+  }
+  
+  // Configure ApiManager for intelligent fallback
+  const apiManagerConfig: ApiManagerConfig = {
+    providers,
+    retryAttempts: 3,
+    timeoutMs: 30000,
+    enableCaching: true
+  };
+  
+  apiManager = new ApiManager(apiManagerConfig);
+  
+  logger.info('Deep Code Reasoning system initialized', {
+    primaryProvider: 'gemini',
+    fallbackProviders: providers.map(p => p.name),
+    totalProviders: providers.length
+  });
 }
 
 /**
@@ -125,16 +164,58 @@ const ClaudeCodeContextSchema = z.object({
 });
 
 /**
- * Zod schema for the escalate_analysis tool.
+ * Zod schema for the run_hypothesis_tournament tool (flat format).
  * @type {z.ZodObject}
  */
-const EscalateAnalysisSchema = z.object({
-  analysisContext: ClaudeCodeContextSchema,
+const RunHypothesisTournamentSchemaFlat = z.object({
+  attempted_approaches: z.array(z.string()).describe('What VS Code already tried'),
+  partial_findings: z.array(z.any()).describe('Any findings VS Code discovered'),
+  stuck_description: z.array(z.string()).describe('Description of where VS Code got stuck'),
+  code_scope: z.object({
+    files: z.array(z.string()).describe('Files to analyze'),
+    entryPoints: z.array(z.object({
+      file: z.string(),
+      line: z.number(),
+      column: z.number().optional(),
+      functionName: z.string().optional(),
+    })).optional().describe('Specific functions/methods to start from'),
+    serviceNames: z.array(z.string()).optional().describe('Services involved in cross-system analysis'),
+  }).describe('The specific code scope for the analysis'),
+  issue: z.string(),
+  tournamentConfig: z.object({
+    maxHypotheses: z.number().min(2).max(20).optional(),
+    maxRounds: z.number().min(1).max(5).optional(),
+    parallelSessions: z.number().min(1).max(10).optional(),
+  }).optional(),
+});
+
+/**
+ * Zod schema for the escalate_analysis tool (VS Code flat format).
+ * @type {z.ZodObject}
+ */
+const EscalateAnalysisSchemaFlat = z.object({
+  attempted_approaches: z.array(z.string()).describe('What VS Code already tried'),
+  partial_findings: z.array(z.any()).describe('Any findings VS Code discovered'),
+  stuck_description: z.array(z.string()).describe('Description of where VS Code got stuck'),
+  code_scope: z.object({
+    files: z.array(z.string()).describe('Files to analyze'),
+    entryPoints: z.array(z.object({
+      file: z.string(),
+      line: z.number(),
+      column: z.number().optional(),
+      functionName: z.string().optional(),
+    })).optional().describe('Specific functions/methods to start from'),
+    serviceNames: z.array(z.string()).optional().describe('Services involved in cross-system analysis'),
+  }).describe('The specific code scope for the analysis'),
   analysisType: z.enum(['execution_trace', 'cross_system', 'performance', 'hypothesis_test']),
   depthLevel: z.number().min(1).max(5),
   timeBudgetSeconds: z.number().default(60),
 });
 
+/**
+ * Zod schema for the escalate_analysis tool (VS Code format).
+ * @type {z.ZodObject}
+ */
 /**
  * Zod schema for the trace_execution_path tool.
  * @type {z.ZodObject}
@@ -195,7 +276,12 @@ const PerformanceBottleneckSchema = z.object({
  * @type {z.ZodObject}
  */
 const StartConversationSchema = z.object({
-  analysisContext: ClaudeCodeContextSchema,
+  attempted_approaches: z.string(),
+  partial_findings: z.string(),
+  stuck_description: z.string(),
+  code_scope_files: z.string(),
+  code_scope_entry_points: z.string().optional(),
+  code_scope_service_names: z.string().optional(),
   analysisType: z.enum(['execution_trace', 'cross_system', 'performance', 'hypothesis_test']),
   initialQuestion: z.string().optional(),
 });
@@ -228,20 +314,6 @@ const GetConversationStatusSchema = z.object({
 });
 
 /**
- * Zod schema for the run_hypothesis_tournament tool.
- * @type {z.ZodObject}
- */
-const RunHypothesisTournamentSchema = z.object({
-  analysisContext: ClaudeCodeContextSchema,
-  issue: z.string(),
-  tournamentConfig: z.object({
-    maxHypotheses: z.number().min(2).max(20).optional(),
-    maxRounds: z.number().min(1).max(5).optional(),
-    parallelSessions: z.number().min(1).max(10).optional(),
-  }).optional(),
-});
-
-/**
  * Zod schema for the health_check tool.
  * @type {z.ZodObject}
  */
@@ -266,47 +338,50 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            analysisContext: {
+            attempted_approaches: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'What VS Code already tried',
+            },
+            partial_findings: {
+              type: 'array',
+              items: { type: 'object' },
+              description: 'Any findings VS Code discovered',
+            },
+            stuck_description: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Description of where VS Code got stuck',
+            },
+            code_scope: {
               type: 'object',
               properties: {
-                attemptedApproaches: {
+                files: {
                   type: 'array',
                   items: { type: 'string' },
-                  description: 'What VS Code already tried',
+                  description: 'Files to analyze',
                 },
-                partialFindings: {
+                entryPoints: {
                   type: 'array',
-                  items: { type: 'object' },
-                  description: 'Any findings VS Code discovered',
-                },
-                stuckPoints: {
-                  type: 'array',
-                  items: { type: 'string' },
-                  description: 'Description of where VS Code got stuck',
-                },
-                focusArea: {
-                  type: 'object',
-                  properties: {
-                    files: {
-                      type: 'array',
-                      items: { type: 'string' },
-                      description: 'Files to analyze',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      file: { type: 'string' },
+                      line: { type: 'number' },
+                      column: { type: 'number' },
+                      functionName: { type: 'string' }
                     },
-                    entryPoints: {
-                      type: 'array',
-                      items: { type: 'object' },
-                      description: 'Specific functions/methods to start from',
-                    },
-                    serviceNames: {
-                      type: 'array',
-                      items: { type: 'string' },
-                      description: 'Services involved in cross-system analysis',
-                    },
+                    required: ['file', 'line']
                   },
-                  required: ['files'],
+                  description: 'Specific functions/methods to start from',
+                },
+                serviceNames: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  description: 'Services involved in cross-system analysis',
                 },
               },
-              required: ['attemptedApproaches', 'partialFindings', 'stuckPoints', 'focusArea'],
+              required: ['files'],
             },
             analysisType: {
               type: 'string',
@@ -325,7 +400,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: 'Maximum time for analysis',
             },
           },
-          required: ['analysisContext', 'analysisType', 'depthLevel'],
+          required: ['attempted_approaches', 'partial_findings', 'stuck_description', 'code_scope', 'analysisType', 'depthLevel'],
         },
       },
       {
@@ -424,47 +499,29 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            analysisContext: {
-              type: 'object',
-              properties: {
-                attemptedApproaches: {
-                  type: 'array',
-                  items: { type: 'string' },
-                  description: 'What VS Code already tried',
-                },
-                partialFindings: {
-                  type: 'array',
-                  items: { type: 'object' },
-                  description: 'Any findings VS Code discovered',
-                },
-                stuckPoints: {
-                  type: 'array',
-                  items: { type: 'string' },
-                  description: 'Description of where VS Code got stuck',
-                },
-                focusArea: {
-                  type: 'object',
-                  properties: {
-                    files: {
-                      type: 'array',
-                      items: { type: 'string' },
-                      description: 'Files to analyze',
-                    },
-                    entryPoints: {
-                      type: 'array',
-                      items: { type: 'string' },
-                      description: 'Specific functions/methods to start from',
-                    },
-                    serviceNames: {
-                      type: 'array',
-                      items: { type: 'string' },
-                      description: 'Services involved in cross-system analysis',
-                    },
-                  },
-                  required: ['files'],
-                },
-              },
-              required: ['attemptedApproaches', 'partialFindings', 'stuckPoints', 'focusArea'],
+            attempted_approaches: {
+              type: 'string',
+              description: 'What VS Code already tried (JSON array as string)',
+            },
+            partial_findings: {
+              type: 'string',
+              description: 'Any findings VS Code discovered (JSON array as string)',
+            },
+            stuck_description: {
+              type: 'string',
+              description: 'Description of where VS Code got stuck (JSON array as string)',
+            },
+            code_scope_files: {
+              type: 'string',
+              description: 'Files to analyze (JSON array as string)',
+            },
+            code_scope_entry_points: {
+              type: 'string',
+              description: 'Entry points (JSON array as string, optional)',
+            },
+            code_scope_service_names: {
+              type: 'string',
+              description: 'Service names (JSON array as string, optional)',
             },
             analysisType: {
               type: 'string',
@@ -476,7 +533,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: 'Initial question to start the conversation',
             },
           },
-          required: ['analysisContext', 'analysisType'],
+          required: ['attempted_approaches', 'partial_findings', 'stuck_description', 'code_scope_files', 'analysisType'],
         },
       },
       {
@@ -540,47 +597,50 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            analysisContext: {
+            attempted_approaches: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'What VS Code already tried',
+            },
+            partial_findings: {
+              type: 'array',
+              items: { type: 'object' },
+              description: 'Any findings VS Code discovered',
+            },
+            stuck_description: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Description of where VS Code got stuck',
+            },
+            code_scope: {
               type: 'object',
               properties: {
-                attemptedApproaches: {
+                files: {
                   type: 'array',
                   items: { type: 'string' },
-                  description: 'What VS Code already tried',
+                  description: 'Files to analyze',
                 },
-                partialFindings: {
+                entryPoints: {
                   type: 'array',
-                  items: { type: 'object' },
-                  description: 'Any findings VS Code discovered',
-                },
-                stuckPoints: {
-                  type: 'array',
-                  items: { type: 'string' },
-                  description: 'Description of where VS Code got stuck',
-                },
-                focusArea: {
-                  type: 'object',
-                  properties: {
-                    files: {
-                      type: 'array',
-                      items: { type: 'string' },
-                      description: 'Files to analyze',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      file: { type: 'string' },
+                      line: { type: 'number' },
+                      column: { type: 'number' },
+                      functionName: { type: 'string' }
                     },
-                    entryPoints: {
-                      type: 'array',
-                      items: { type: 'string' },
-                      description: 'Specific functions/methods to start from',
-                    },
-                    serviceNames: {
-                      type: 'array',
-                      items: { type: 'string' },
-                      description: 'Services involved in cross-system analysis',
-                    },
+                    required: ['file', 'line']
                   },
-                  required: ['files'],
+                  description: 'Specific functions/methods to start from',
+                },
+                serviceNames: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  description: 'Services involved in cross-system analysis',
                 },
               },
-              required: ['attemptedApproaches', 'partialFindings', 'stuckPoints', 'focusArea'],
+              required: ['files'],
             },
             issue: {
               type: 'string',
@@ -610,7 +670,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               },
             },
           },
-          required: ['analysisContext', 'issue'],
+          required: ['attempted_approaches', 'partial_findings', 'stuck_description', 'code_scope', 'issue'],
         },
       },
       {
@@ -640,6 +700,29 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
         },
       },
+      {
+        name: 'get_model_info',
+        description: 'Get current model configuration and available model options',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+      {
+        name: 'set_model',
+        description: 'Change the Gemini model used for analysis',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            model: {
+              type: 'string',
+              enum: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'],
+              description: 'The Gemini model to use for analysis',
+            },
+          },
+          required: ['model'],
+        },
+      },
     ],
   };
 });
@@ -658,31 +741,109 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     switch (name) {
       case 'escalate_analysis': {
-        const parsed = EscalateAnalysisSchema.parse(args);
+        const parsed = EscalateAnalysisSchemaFlat.parse(args);
 
-        // Validate and sanitize the analysis context
-        const validatedContext = InputValidator.validateClaudeContext(parsed.analysisContext);
-
-        // Override with specific values from the parsed input
-        const context: ClaudeCodeContext = {
-          ...validatedContext,
+        // Transform flat VS Code format to internal ClaudeCodeContext format
+        const analysisContext: ClaudeCodeContext = {
+          attemptedApproaches: parsed.attempted_approaches,
+          partialFindings: parsed.partial_findings,
+          stuckPoints: parsed.stuck_description,
+          focusArea: {
+            files: parsed.code_scope.files,
+            entryPoints: parsed.code_scope.entryPoints || [],
+            serviceNames: parsed.code_scope.serviceNames || [],
+          },
           analysisBudgetRemaining: parsed.timeBudgetSeconds,
         };
 
-        const result = await deepReasoner.escalateFromClaudeCode(
-          context,
-          parsed.analysisType,
-          parsed.depthLevel || 3
-        );
+        // Validate and sanitize the analysis context
+        const validatedContext = InputValidator.validateClaudeContext(analysisContext);
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        };
+        try {
+          // Primary execution: Use DeepCodeReasonerV2
+          const result = await deepReasoner.escalateFromClaudeCode(
+            validatedContext,
+            parsed.analysisType,
+            parsed.depthLevel
+          );
+
+          // Log successful primary execution
+          logger.debug('escalate_analysis succeeded with primary provider (DeepCodeReasonerV2)', {
+            analysisType: parsed.analysisType,
+            depthLevel: parsed.depthLevel,
+            filesCount: validatedContext.focusArea.files.length
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (primaryError) {
+          // Multi-provider fallback: Use ApiManager if available
+          if (apiManager) {
+            const classification = ErrorClassifier.classify(primaryError as Error);
+            
+            logger.warn('escalate_analysis failed with primary provider, attempting multi-provider fallback', {
+              analysisType: parsed.analysisType,
+              errorCategory: classification.category,
+              isRetryable: classification.isRetryable
+            });
+
+            if (classification.isRetryable) {
+              try {
+                const fallbackResult = await apiManager.analyzeWithFallback(
+                  validatedContext,
+                  parsed.analysisType
+                );
+
+                // Convert ApiManager result to expected format
+                const convertedResult = {
+                  analysis: fallbackResult.result?.analysis || 'Analysis completed via multi-provider fallback',
+                  confidence: fallbackResult.result?.confidence || 0.75,
+                  strategy: `multi-provider-fallback-${fallbackResult.provider}`,
+                  executionTime: fallbackResult.duration,
+                  memoryUsed: fallbackResult.memoryUsed || 0,
+                  metadata: {
+                    provider: fallbackResult.provider,
+                    cost: fallbackResult.cost,
+                    fallbackUsed: true,
+                    originalError: (primaryError as Error).message,
+                    analysisType: parsed.analysisType
+                  }
+                };
+
+                logger.info('escalate_analysis succeeded with multi-provider fallback', {
+                  analysisType: parsed.analysisType,
+                  fallbackProvider: fallbackResult.provider,
+                  executionTime: fallbackResult.duration
+                });
+
+                return {
+                  content: [
+                    {
+                      type: 'text',
+                      text: JSON.stringify(convertedResult, null, 2),
+                    },
+                  ],
+                };
+              } catch (fallbackError) {
+                logger.error('escalate_analysis failed with both primary and fallback providers', {
+                  analysisType: parsed.analysisType,
+                  primaryError: (primaryError as Error).message,
+                  fallbackError: (fallbackError as Error).message
+                });
+                // Fall through to throw original error
+              }
+            }
+          }
+          
+          // If no fallback available or fallback failed, throw original error
+          throw primaryError;
+        }
       }
 
       case 'trace_execution_path': {
@@ -800,14 +961,26 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'start_conversation': {
         const parsed = StartConversationSchema.parse(args);
+        
+        // Parse JSON string fields back to arrays/objects
+        const attempted_approaches = JSON.parse(parsed.attempted_approaches);
+        const partial_findings = JSON.parse(parsed.partial_findings);
+        const stuck_description = JSON.parse(parsed.stuck_description);
+        const code_scope_files = JSON.parse(parsed.code_scope_files);
+        const code_scope_entry_points = parsed.code_scope_entry_points ? JSON.parse(parsed.code_scope_entry_points) : [];
+        const code_scope_service_names = parsed.code_scope_service_names ? JSON.parse(parsed.code_scope_service_names) : [];
 
-        // Validate and sanitize the analysis context
-        const validatedContext = InputValidator.validateClaudeContext(parsed.analysisContext);
-
-        // Override default budget
+        // Transform to ClaudeCodeContext format
         const context: ClaudeCodeContext = {
-          ...validatedContext,
-          analysisBudgetRemaining: 60,
+          attemptedApproaches: InputValidator.validateStringArray(attempted_approaches),
+          partialFindings: partial_findings,
+          stuckPoints: InputValidator.validateStringArray(stuck_description),
+          focusArea: {
+            files: InputValidator.validateFilePaths(code_scope_files),
+            entryPoints: code_scope_entry_points,
+            serviceNames: code_scope_service_names,
+          },
+          analysisBudgetRemaining: 300, // 5 minutes for conversational analysis
         };
 
         const result = await deepReasoner.startConversation(
@@ -878,16 +1051,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'run_hypothesis_tournament': {
-        const parsed = RunHypothesisTournamentSchema.parse(args);
+        const parsed = RunHypothesisTournamentSchemaFlat.parse(args);
 
-        // Validate and sanitize the analysis context
-        const validatedContext = InputValidator.validateClaudeContext(parsed.analysisContext);
-
-        // Override with specific values from the parsed input
-        const context: ClaudeCodeContext = {
-          ...validatedContext,
+        // Transform flat VS Code format to internal ClaudeCodeContext format
+        const analysisContext: ClaudeCodeContext = {
+          attemptedApproaches: parsed.attempted_approaches,
+          partialFindings: parsed.partial_findings,
+          stuckPoints: parsed.stuck_description,
+          focusArea: {
+            files: parsed.code_scope.files,
+            entryPoints: parsed.code_scope.entryPoints || [],
+            serviceNames: parsed.code_scope.serviceNames || [],
+          },
           analysisBudgetRemaining: 300, // 5 minutes for tournament
         };
+
+        // Validate and sanitize the analysis context
+        const validatedContext = InputValidator.validateClaudeContext(analysisContext);
 
         const tournamentConfig = {
           maxHypotheses: parsed.tournamentConfig?.maxHypotheses ?? 6,
@@ -896,7 +1076,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
 
         const result = await deepReasoner.runHypothesisTournament(
-          context,
+          validatedContext,
           InputValidator.validateString(parsed.issue, 1000),
           tournamentConfig,
         );
@@ -981,6 +1161,71 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      case 'get_model_info': {
+        const currentModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+        const availableModels = [
+          {
+            name: 'gemini-2.5-pro',
+            description: 'Highest quality, 5 RPM limit - best for single complex analysis',
+            rateLimit: '5 requests/minute, 100 requests/day',
+            qualityScore: '10/10',
+          },
+          {
+            name: 'gemini-2.5-flash',
+            description: 'Good quality, 10 RPM limit - best for multi-request workflows',
+            rateLimit: '10 requests/minute, 250 requests/day',
+            qualityScore: '8/10',
+          },
+          {
+            name: 'gemini-2.0-flash',
+            description: 'Acceptable quality, 15 RPM limit - best for high-volume analysis',
+            rateLimit: '15 requests/minute, 200 requests/day',
+            qualityScore: '7/10',
+          },
+        ];
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                currentModel,
+                availableModels,
+                recommendation: 'Use gemini-2.5-flash for balanced performance',
+                toolRecommendations: {
+                  singleAnalysis: 'gemini-2.5-pro',
+                  conversations: 'gemini-2.5-flash',
+                  tournaments: 'gemini-2.0-flash (with queuing)',
+                },
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'set_model': {
+        const parsed = z.object({
+          model: z.enum(['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash']),
+        }).parse(args);
+
+        // Update environment variable (this affects current session only)
+        process.env.GEMINI_MODEL = parsed.model;
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                newModel: parsed.model,
+                message: `Model changed to ${parsed.model} for current session. To persist this change, update your .env file: GEMINI_MODEL=${parsed.model}`,
+                restartRequired: 'For permanent changes, restart the MCP server',
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
       default:
         throw new McpError(
           ErrorCode.MethodNotFound,
@@ -995,27 +1240,36 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       );
     }
 
-    // Use ErrorClassifier for consistent error handling
+    // Enhanced error handling using ErrorClassifier and structured formatting
     if (error instanceof Error) {
       const classification = ErrorClassifier.classify(error);
+
+      // Log structured error information for debugging
+      logger.error('Tool execution error', {
+        tool: request.params.name,
+        errorType: classification.category,
+        errorMessage: error.message,
+        isRetryable: classification.isRetryable,
+        stack: error.stack?.substring(0, 500) // Limit stack trace length
+      });
 
       switch (classification.category) {
         case 'session':
           throw new McpError(
             ErrorCode.InvalidRequest,
-            classification.description,
+            `Session error: ${classification.description}`,
           );
 
         case 'api':
           throw new McpError(
             ErrorCode.InternalError,
-            classification.description,
+            `API error: ${classification.description}. ${classification.isRetryable ? 'The issue may be temporary - please try again.' : ''}`,
           );
 
         case 'filesystem':
           throw new McpError(
             ErrorCode.InvalidRequest,
-            classification.description,
+            `File system error: ${classification.description}. Please check file paths and permissions.`,
           );
 
         default:

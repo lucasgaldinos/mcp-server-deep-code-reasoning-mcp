@@ -725,4 +725,123 @@ npm run health-check
 curl -s localhost:3000/health | jq '.performance_metrics'
 ```
 
+## Quick Parameter Reference
+
+### Essential Parameters for All Tools
+
+All MCP tools require these core parameters in flat format:
+
+```typescript
+{
+  "attempted_approaches": string[],    // What you've already tried
+  "partial_findings": object[],        // Any discoveries so far  
+  "stuck_description": string[],       // Where you're stuck
+  "code_scope": {
+    "files": string[],                 // Files to analyze (required)
+    "entryPoints"?: object[],          // Specific functions/lines
+    "serviceNames"?: string[]          // Service names for cross-system
+  }
+}
+```
+
+### Tool-Specific Required Parameters
+
+**start_conversation, continue_conversation, finalize_conversation:**
+
+```typescript
+{
+  // ... core parameters above ...
+  "analysisType": "execution_trace" | "cross_system" | "performance" | "hypothesis_test",
+  "initialQuestion"?: string          // For start_conversation
+}
+```
+
+**run_hypothesis_tournament:**
+
+```typescript
+{
+  // ... core parameters above ...
+  "issue": string,                    // Problem description
+  "tournamentConfig"?: {
+    "maxHypotheses"?: number,         // Default: 6
+    "maxRounds"?: number,             // Default: 3  
+    "parallelSessions"?: number       // Default: 4
+  }
+}
+```
+
+**escalate_analysis:**
+
+```typescript
+{
+  // ... core parameters above ...
+  "analysisType": "execution_trace" | "cross_system" | "performance" | "hypothesis_test",
+  "depthLevel": 1-5,                  // Analysis depth
+  "timeBudgetSeconds"?: number        // Time limit
+}
+```
+
+**cross_system_impact:**
+
+```typescript
+{
+  "changeScope": {
+    "files": string[],
+    "serviceNames"?: string[]
+  },
+  "impactTypes": ("breaking" | "performance" | "behavioral")[]
+}
+```
+
+**performance_bottleneck:**
+
+```typescript
+{
+  "codePath": {
+    "entryPoint": {
+      "file": string,
+      "line": number,
+      "functionName"?: string
+    },
+    "suspectedIssues"?: string[]
+  },
+  "profileDepth"?: 1-5                // Default: 3
+}
+```
+
+**hypothesis_test:**
+
+```typescript
+{
+  "hypothesis": string,               // Theory to test
+  "codeScope": {
+    "files": string[]
+  },
+  "testApproach": string              // How to test it
+}
+```
+
+**trace_execution_path:**
+
+```typescript
+{
+  "entryPoint": {
+    "file": string,
+    "line": number,
+    "functionName"?: string
+  },
+  "maxDepth"?: number,                // Default: 10
+  "includeDataFlow"?: boolean         // Default: true
+}
+```
+
+**health_check, health_summary:**
+
+```typescript
+{
+  "check_name"?: string,              // Specific check (health_check only)
+  "include_details"?: boolean         // Default: true (health_summary only)
+}
+```
+
 This user guide provides a comprehensive foundation for effectively using the Deep Code Reasoning MCP Server in your development workflow.

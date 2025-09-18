@@ -2,6 +2,7 @@
  * @fileoverview Tests for ConfigurationManager
  */
 
+import { vi } from 'vitest';
 import { 
   ConfigurationManager,
   DefaultConfigSource,
@@ -10,26 +11,25 @@ import {
 } from '../config/configuration-manager.js';
 import { EnvironmentValidator } from '../utils/environment-validator.js';
 import * as fs from 'fs';
-import * as path from 'path';
 
 // Mock dependencies
-jest.mock('../utils/environment-validator.js');
-jest.mock('fs');
+vi.mock('../utils/environment-validator.js');
+vi.mock('fs');
 
-const mockEnvironmentValidator = EnvironmentValidator as jest.MockedClass<typeof EnvironmentValidator>;
-const mockFs = fs as jest.Mocked<typeof fs>;
+const mockEnvironmentValidator = vi.mocked(EnvironmentValidator);
+const mockFs = vi.mocked(fs);
 
 describe('ConfigurationManager', () => {
   let configManager: ConfigurationManager;
   let tempConfigPath: string;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     configManager = ConfigurationManager.getInstance();
     tempConfigPath = './test-config.json';
     
     // Mock successful environment validation with static method
-    mockEnvironmentValidator.getValidatedConfig = jest.fn().mockReturnValue({
+    mockEnvironmentValidator.getValidatedConfig = vi.fn().mockReturnValue({
       geminiApiKey: 'test-key',
       nodeEnv: 'test',
       mcpServerName: 'test-server',
@@ -70,7 +70,7 @@ describe('ConfigurationManager', () => {
     it('should not re-initialize if already initialized', async () => {
       await configManager.initialize();
       
-      const spy = jest.spyOn(console, 'warn').mockImplementation();
+      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       await configManager.initialize();
       
       expect(spy).toHaveBeenCalledWith('Configuration manager already initialized');
@@ -174,7 +174,7 @@ describe('ConfigurationManager', () => {
     });
 
     it('should handle reload errors gracefully', async () => {
-      (mockEnvironmentValidator.getValidatedConfig as jest.Mock).mockImplementation(() => {
+      vi.mocked(mockEnvironmentValidator.getValidatedConfig).mockImplementation(() => {
         throw new Error('Validation failed');
       });
 
@@ -190,7 +190,7 @@ describe('ConfigurationManager', () => {
     it('should export configuration to file', async () => {
       const exportPath = './exported-config.json';
       
-      mockFs.promises.writeFile = jest.fn().mockResolvedValue(undefined);
+      mockFs.promises.writeFile = vi.fn().mockResolvedValue(undefined);
       
       await configManager.exportConfiguration(exportPath);
       
@@ -209,7 +209,7 @@ describe('EnvironmentConfigSource', () => {
   beforeEach(() => {
     source = new EnvironmentConfigSource();
     
-    (mockEnvironmentValidator.getValidatedConfig as jest.Mock).mockReturnValue({
+    vi.mocked(mockEnvironmentValidator.getValidatedConfig).mockReturnValue({
       geminiApiKey: 'test-key',
       nodeEnv: 'test',
     } as any);
@@ -245,8 +245,8 @@ describe('FileConfigSource', () => {
   it('should load configuration from existing file', async () => {
     const testConfig = { logLevel: 'debug', requestTimeout: 60000 };
     
-    (mockFs.existsSync as jest.Mock).mockReturnValue(true);
-    (mockFs.promises.readFile as jest.Mock) = jest.fn().mockResolvedValue(JSON.stringify(testConfig));
+    vi.mocked(mockFs.existsSync).mockReturnValue(true);
+    vi.mocked(mockFs.promises.readFile).mockResolvedValue(JSON.stringify(testConfig));
     
     const config = await source.load();
     
@@ -255,7 +255,7 @@ describe('FileConfigSource', () => {
   });
 
   it('should return empty config for non-existent file', async () => {
-    (mockFs.existsSync as jest.Mock).mockReturnValue(false);
+    vi.mocked(mockFs.existsSync).mockReturnValue(false);
     
     const config = await source.load();
     
@@ -263,8 +263,8 @@ describe('FileConfigSource', () => {
   });
 
   it('should handle file read errors gracefully', async () => {
-    (mockFs.existsSync as jest.Mock).mockReturnValue(true);
-    (mockFs.promises.readFile as jest.Mock) = jest.fn().mockRejectedValue(new Error('Read error'));
+    vi.mocked(mockFs.existsSync).mockReturnValue(true);
+    vi.mocked(mockFs.promises.readFile).mockRejectedValue(new Error('Read error'));
     
     const config = await source.load();
     
@@ -274,8 +274,8 @@ describe('FileConfigSource', () => {
   it('should save configuration to file', async () => {
     const testConfig = { logLevel: 'debug' };
     
-    mockFs.promises.mkdir = jest.fn().mockResolvedValue(undefined);
-    mockFs.promises.writeFile = jest.fn().mockResolvedValue(undefined);
+    mockFs.promises.mkdir = vi.fn().mockResolvedValue(undefined);
+    mockFs.promises.writeFile = vi.fn().mockResolvedValue(undefined);
     
     await source.save!(testConfig);
     

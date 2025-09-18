@@ -75,8 +75,8 @@ export class SecurityAnalysisAgent extends EventEmitter {
   private initializeSecurityPatterns(): void {
     // SQL Injection patterns
     this.securityPatterns.set('sql_injection', [
-      /query\s*\+=?\s*["\'].*?\+.*?["\'][^;]*;?/gi,
-      /execute\s*\(\s*["\'].*?\+.*?["\'].*?\)/gi,
+      /query\s*\+=?\s*['"].*?\+.*?['"]/gi,
+      /execute\s*\(\s*['"].*?\+.*?['"].*?\)/gi,
       /\$\{.*?\}/g, // Template literal injection
       /concatenat.*?query/gi,
       /string\.format.*?select|insert|update|delete/gi
@@ -93,9 +93,9 @@ export class SecurityAnalysisAgent extends EventEmitter {
 
     // Authentication issues
     this.securityPatterns.set('auth', [
-      /password\s*=\s*["\'][^"\']+["\'][^;]*;?/gi,
-      /api_?key\s*=\s*["\'][^"\']+["\'][^;]*;?/gi,
-      /token\s*=\s*["\'][^"\']+["\'][^;]*;?/gi,
+      /password\s*=\s*['"][^'"]+['"]/gi,
+      /api_?key\s*=\s*['"][^'"]+['"]/gi,
+      /token\s*=\s*['"][^'"]+['"]/gi,
       /hardcoded.*?password/gi,
       /\.equals\s*\(\s*password/gi
     ]);
@@ -119,10 +119,10 @@ export class SecurityAnalysisAgent extends EventEmitter {
 
     // Session management issues
     this.securityPatterns.set('session', [
-      /session_?id\s*=\s*["\'][^"\']+["\'][^;]*;?/gi,
+      /session_?id\s*=\s*['"][^'"]+['"]/gi,
       /httpOnly\s*:\s*false/gi,
       /secure\s*:\s*false/gi,
-      /sameSite\s*:\s*["\']?none["\']?/gi
+      /sameSite\s*:\s*['"]?none['"]?/gi
     ]);
 
     // Path traversal
@@ -586,7 +586,7 @@ export class SecurityAnalysisAgent extends EventEmitter {
   /**
    * Assess security practices in the codebase
    */
-  private assessSecurityPractices(codeFiles: string[]): SecurityAssessment['securityPractices'] {
+  private assessSecurityPractices(_codeFiles: string[]): SecurityAssessment['securityPractices'] {
     // Simplified assessment - in practice, this would be more comprehensive
     return {
       authentication: 75,

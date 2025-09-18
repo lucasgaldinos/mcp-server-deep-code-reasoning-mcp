@@ -22,7 +22,7 @@ export class ConversationalGeminiService {
   constructor(apiKey: string) {
     this.genAI = new GoogleGenerativeAI(apiKey);
     this.model = this.genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash-002', // Free tier model with 1M tokens
       generationConfig: {
         temperature: 0.3, // Slightly higher for conversational flow
         topK: 1,

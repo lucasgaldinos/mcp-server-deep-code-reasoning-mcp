@@ -158,43 +158,45 @@ You're investigating a memory leak in a Node.js application that only occurs in 
 {
   "name": "start_conversation", 
   "arguments": {
-    "claude_context": {
-      "attempted_approaches": [
-        "Local memory profiling with --inspect",
-        "Heap dump analysis with Chrome DevTools", 
-        "Production memory monitoring for 2 weeks",
-        "Code review of recent changes"
-      ],
-      "partial_findings": [
-        {
-          "type": "memory_pattern",
-          "description": "Memory grows 50MB/hour during peak traffic",
-          "location": "suspected in request handling layer"
-        },
-        {
-          "type": "timing_correlation", 
-          "description": "Memory spikes correlate with specific API endpoints"
-        }
-      ],
-      "stuck_description": "Memory leak occurs only in production under load, difficult to reproduce locally. Heap dumps show retained objects but root cause unclear.",
-      "code_scope": {
-        "files": [
-          "src/api/RequestHandler.ts",
-          "src/middleware/AuthMiddleware.ts", 
-          "src/cache/RedisCache.ts",
-          "src/database/ConnectionPool.ts"
-        ],
-        "entry_points": [
-          {
-            "file": "src/api/RequestHandler.ts",
-            "line": 25,
-            "function_name": "handleRequest"
-          }
-        ]
+    "attempted_approaches": [
+      "Local memory profiling with --inspect",
+      "Heap dump analysis with Chrome DevTools", 
+      "Production memory monitoring for 2 weeks",
+      "Code review of recent changes"
+    ],
+    "partial_findings": [
+      {
+        "type": "memory_pattern",
+        "description": "Memory grows 50MB/hour during peak traffic",
+        "location": "suspected in request handling layer"
+      },
+      {
+        "type": "timing_correlation", 
+        "description": "Memory spikes correlate with specific API endpoints"
       }
+    ],
+    "stuck_description": [
+      "Memory leak occurs only in production under load, difficult to reproduce locally",
+      "Heap dumps show retained objects but root cause unclear",
+      "Cannot isolate which component is causing the leak"
+    ],
+    "code_scope": {
+      "files": [
+        "src/api/RequestHandler.ts",
+        "src/middleware/AuthMiddleware.ts", 
+        "src/cache/RedisCache.ts",
+        "src/database/ConnectionPool.ts"
+      ],
+      "entryPoints": [
+        {
+          "file": "src/api/RequestHandler.ts",
+          "line": 25,
+          "functionName": "handleRequest"
+        }
+      ]
     },
-    "analysis_focus": "debugging",
-    "depth_level": 4
+    "analysisType": "performance",
+    "initialQuestion": "Can you help identify the root cause of this production memory leak pattern?"
   }
 }
 ```
@@ -336,39 +338,30 @@ Users report that the mobile app crashes intermittently when uploading photos, b
 {
   "name": "run_hypothesis_tournament",
   "arguments": {
-    "hypotheses": [
+    "attempted_approaches": [
+      "Crash report analysis for 100+ incidents",
+      "Memory profiling on test devices",
+      "Network latency testing in various conditions",
+      "Server log correlation with crash timestamps"
+    ],
+    "partial_findings": [
       {
-        "id": "memory_limit",
-        "description": "Large photo files exceed mobile app memory limits causing crashes",
-        "type": "performance",
-        "confidence_level": 4
+        "type": "crash_pattern",
+        "description": "Crashes increase 300% with photos larger than 5MB",
+        "confidence": 0.8
       },
       {
-        "id": "network_timeout", 
-        "description": "Slow network connections cause upload timeouts leading to crashes",
-        "type": "behavior",
-        "confidence_level": 3
-      },
-      {
-        "id": "concurrent_uploads",
-        "description": "Multiple simultaneous uploads create race conditions",
-        "type": "bug",
-        "confidence_level": 3
-      },
-      {
-        "id": "server_rejection",
-        "description": "Server-side validation errors not properly handled by mobile client",
-        "type": "bug", 
-        "confidence_level": 2
-      },
-      {
-        "id": "image_processing",
-        "description": "Image compression/resizing logic has memory leaks or crashes",
-        "type": "bug",
-        "confidence_level": 4
+        "type": "timing_correlation",
+        "description": "80% of crashes occur during peak network usage hours",
+        "confidence": 0.7
       }
     ],
-    "test_scope": {
+    "stuck_description": [
+      "Cannot reproduce crashes consistently in development environment",
+      "Multiple potential root causes with overlapping symptoms",
+      "Need systematic testing of competing theories"
+    ],
+    "code_scope": {
       "files": [
         "mobile/src/components/PhotoUpload.tsx",
         "mobile/src/services/UploadService.ts",
@@ -376,15 +369,17 @@ Users report that the mobile app crashes intermittently when uploading photos, b
         "server/src/api/upload.ts",
         "server/src/middleware/validation.ts"
       ],
-      "shared_context": {
-        "crash_reports": "mobile/logs/crash-reports.json",
-        "server_logs": "server/logs/upload-errors.log",
-        "user_reports": "support/user-reports.md"
-      }
+      "serviceNames": [
+        "PhotoUploadService",
+        "ImageProcessingService", 
+        "FileUploadAPI"
+      ]
     },
-    "tournament_settings": {
-      "max_parallel": 3,
-      "timeout_per_hypothesis": 45
+    "issue": "Mobile app crashes intermittently during photo uploads, affecting 15% of users with unclear root cause",
+    "tournamentConfig": {
+      "maxHypotheses": 5,
+      "maxRounds": 3,
+      "parallelSessions": 3
     }
   }
 }

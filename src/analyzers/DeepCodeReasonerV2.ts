@@ -453,7 +453,7 @@ export class DeepCodeReasonerV2 {
     status: string;
   }> {
     // Acquire lock before processing
-    const lockAcquired = this.conversationManager.acquireLock(sessionId);
+    const lockAcquired = await this.conversationManager.acquireLock(sessionId);
     if (!lockAcquired) {
       throw new ConversationLockedError(sessionId);
     }
@@ -503,7 +503,7 @@ export class DeepCodeReasonerV2 {
     summaryFormat?: 'detailed' | 'concise' | 'actionable',
   ): Promise<DeepAnalysisResult> {
     // Acquire lock before processing
-    const lockAcquired = this.conversationManager.acquireLock(sessionId);
+    const lockAcquired = await this.conversationManager.acquireLock(sessionId);
     if (!lockAcquired) {
       throw new ConversationLockedError(sessionId);
     }
@@ -523,6 +523,9 @@ export class DeepCodeReasonerV2 {
 
       // Extract additional insights from conversation manager
       const conversationResults = this.conversationManager.extractResults(sessionId);
+
+      // Cleanup the session now that we're done with it
+      this.conversationManager.cleanupSession(sessionId);
 
       // Merge results
       return {

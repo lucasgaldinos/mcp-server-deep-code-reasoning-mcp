@@ -37,8 +37,10 @@ export class GeminiService implements ApiProvider {
   constructor(apiKey: string, injectedGenAI?: GoogleGenerativeAI) {
     // Use injected dependency for testing, or create new instance for production
     this.genAI = injectedGenAI || new GoogleGenerativeAI(apiKey);
+    
+    // Start with free tier model - will be upgraded dynamically for reasoning tasks
     this.model = this.genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash-002', // Free tier model with 1M tokens, stable release
       generationConfig: {
         temperature: 0.2,
         topK: 1,
@@ -50,6 +52,36 @@ export class GeminiService implements ApiProvider {
     });
     
     this.memoryOptimizer = MemoryOptimizer.getInstance();
+  }
+
+  /**
+   * Get appropriate model for task complexity
+   * Switches to pro model for reasoning tasks to ensure quality
+   */
+  private getModelForTask(analysisType: string, requiresReasoning: boolean = true): ReturnType<GoogleGenerativeAI['getGenerativeModel']> {
+    // For complex reasoning tasks, attempt to use a more capable model
+    if (requiresReasoning && ['execution_trace', 'cross_system', 'performance', 'hypothesis_test'].includes(analysisType)) {
+      try {
+        return this.genAI.getGenerativeModel({
+          model: 'gemini-2.5-flash', // Try 2.5 Flash first (potentially free)
+          generationConfig: {
+            temperature: 0.2,
+            topK: 1,
+            topP: 1,
+            maxOutputTokens: 8192,
+          },
+        }, {
+          apiVersion: 'v1beta',
+        });
+      } catch (error) {
+        console.warn('Unable to use 2.5 Flash model, falling back to 1.5 Flash:', error);
+        // Fall back to free tier model
+        return this.model;
+      }
+    }
+    
+    // Use default free tier model for simple tasks
+    return this.model;
   }
 
   /**
@@ -124,7 +156,7 @@ export class GeminiService implements ApiProvider {
   private estimateInputTokens(context: ClaudeCodeContext): number {
     const baseTokens = 1000; // Base prompt tokens
     const approachTokens = context.attemptedApproaches.join(' ').length / 4;
-    const findingTokens = context.partialFindings.map(f => f.description).join(' ').length / 4;
+    const findingTokens = context.partialFindings.map((f: any) => f.description || String(f)).join(' ').length / 4;
     const stuckTokens = context.stuckPoints.join(' ').length / 4;
     const fileTokens = context.focusArea.files.length * 20;
 
@@ -183,8 +215,11 @@ export class GeminiService implements ApiProvider {
   ): Promise<DeepAnalysisResult> {
     const prompt = this.buildAnalysisPrompt(context, analysisType, codeContent);
 
+    // Get appropriate model for the task complexity
+    const taskModel = this.getModelForTask(analysisType, true);
+
     try {
-      const result = await this.model.generateContent(prompt);
+      const result = await taskModel.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
 
@@ -194,6 +229,18 @@ export class GeminiService implements ApiProvider {
       // Check for rate limit errors
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes('rate limit') || errorMessage.includes('quota')) {
+        // If pro model fails due to quota, try falling back to free tier
+        if (taskModel !== this.model) {
+          console.warn('Pro model quota exceeded, falling back to free tier model');
+          try {
+            const fallbackResult = await this.model.generateContent(prompt);
+            const fallbackResponse = await fallbackResult.response;
+            const fallbackText = fallbackResponse.text();
+            return this.parseGeminiResponse(fallbackText, context);
+          } catch (fallbackError) {
+            console.error('Fallback model also failed:', fallbackError);
+          }
+        }
         throw new RateLimitError(`Gemini API rate limit exceeded: ${errorMessage}`, 'gemini');
       }
       throw new ApiError(`Gemini analysis failed: ${errorMessage}`, 'GEMINI_API_ERROR', 'gemini');

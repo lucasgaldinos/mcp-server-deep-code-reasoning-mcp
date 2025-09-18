@@ -1,6 +1,6 @@
-import { ApiError, RateLimitError } from '@errors/index.js';
-import { ClaudeCodeContext, AnalysisResult } from '@models/types.js';
-import { PromptSanitizer } from '@utils/prompt-sanitizer.js';
+import { ApiError, RateLimitError } from '../errors/index.js';
+import { ClaudeCodeContext, AnalysisResult } from '../models/types.js';
+import { PromptSanitizer } from '../utils/prompt-sanitizer.js';
 import { ApiProvider } from './api-manager.js';
 
 export interface OpenAIConfig {
@@ -17,6 +17,8 @@ export interface OpenAIConfig {
  * 
  * Provides code analysis using OpenAI's GPT models as a fallback
  * when Gemini API is unavailable or has quota issues.
+ * 
+ * DCR-4 Enhancement: Advanced circuit breaker and service monitoring
  */
 export class OpenAIService implements ApiProvider {
   public readonly name = 'openai';
@@ -26,6 +28,15 @@ export class OpenAIService implements ApiProvider {
   private rateLimitRemaining = 1000;
   private rateLimitResetTime = new Date();
   private requestCount = 0;
+  
+  // DCR-4: Enhanced service health tracking
+  private consecutiveFailures = 0;
+  private lastSuccessTime = new Date();
+  private circuitBreakerOpen = false;
+  private circuitBreakerResetTime = new Date();
+  private serviceUnavailableCount = 0;
+  private readonly maxConsecutiveFailures = 3;
+  private readonly circuitBreakerTimeoutMs = 60000; // 1 minute
 
   constructor(config: OpenAIConfig) {
     // Set defaults first, then override with config
@@ -44,9 +55,21 @@ export class OpenAIService implements ApiProvider {
 
   /**
    * Check if OpenAI service is available
+   * DCR-4 Enhancement: Circuit breaker pattern
    */
   async isAvailable(): Promise<boolean> {
     try {
+      // Check circuit breaker state
+      if (this.circuitBreakerOpen) {
+        if (Date.now() < this.circuitBreakerResetTime.getTime()) {
+          return false; // Circuit breaker still open
+        } else {
+          // Reset circuit breaker
+          this.circuitBreakerOpen = false;
+          this.consecutiveFailures = 0;
+        }
+      }
+      
       // Simple availability check - verify API key format
       if (!this.config.apiKey || !this.config.apiKey.startsWith('sk-')) {
         return false;
@@ -80,6 +103,12 @@ export class OpenAIService implements ApiProvider {
       // Parse and validate response
       const analysisResult = this.parseAnalysisResponse(response, analysisType);
       
+      // DCR-4: Track successful response for circuit breaker reset
+      this.consecutiveFailures = 0;
+      this.serviceUnavailableCount = 0;
+      this.lastSuccessTime = new Date();
+      this.circuitBreakerOpen = false;
+      
       const executionTime = Date.now() - startTime;
       
       return {
@@ -96,19 +125,107 @@ export class OpenAIService implements ApiProvider {
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorString = String(error);
       
-      // Handle rate limiting
-      if (errorMessage.includes('rate_limit_exceeded') || errorMessage.includes('429')) {
+      // DCR-4: Track failures for circuit breaker
+      this.consecutiveFailures++;
+      
+      // Enhanced 503 Service Unavailable detection for DCR-4
+      if (errorMessage.includes('503') || 
+          errorMessage.includes('Service Unavailable') ||
+          errorMessage.includes('service_unavailable') ||
+          errorString.includes('503') ||
+          errorMessage.includes('temporarily unavailable') ||
+          errorMessage.includes('server temporarily overloaded')) {
+        
+        // Mark service as temporarily unavailable
+        this.serviceUnavailableCount++;
+        this.rateLimitRemaining = 0;
+        this.rateLimitResetTime = new Date(Date.now() + 30000); // Reset in 30 seconds for 503 errors
+        
+        // DCR-4: Open circuit breaker on repeated 503 errors
+        if (this.serviceUnavailableCount >= 2) {
+          this.circuitBreakerOpen = true;
+          this.circuitBreakerResetTime = new Date(Date.now() + this.circuitBreakerTimeoutMs);
+        }
+        
+        throw new ApiError(
+          `OpenAI service temporarily unavailable (503): ${errorMessage}`, 
+          'SERVICE_UNAVAILABLE', 
+          'openai'
+        );
+      }
+      
+      // Handle rate limiting (429)
+      if (errorMessage.includes('rate_limit_exceeded') || 
+          errorMessage.includes('429') || 
+          errorString.includes('429')) {
         this.rateLimitRemaining = 0;
         this.rateLimitResetTime = new Date(Date.now() + 60000); // Reset in 1 minute
         throw new RateLimitError(`OpenAI API rate limit exceeded: ${errorMessage}`, 'openai');
       }
       
       // Handle quota exceeded
-      if (errorMessage.includes('quota_exceeded') || errorMessage.includes('insufficient_quota')) {
+      if (errorMessage.includes('quota_exceeded') || 
+          errorMessage.includes('insufficient_quota') ||
+          errorMessage.includes('quota')) {
         throw new ApiError(`OpenAI quota exceeded: ${errorMessage}`, 'QUOTA_EXCEEDED', 'openai');
       }
       
+      // Handle authentication errors (401, 403)
+      if (errorMessage.includes('401') || 
+          errorMessage.includes('403') ||
+          errorMessage.includes('unauthorized') ||
+          errorMessage.includes('forbidden') ||
+          errorMessage.includes('invalid_api_key')) {
+        throw new ApiError(
+          `OpenAI authentication failed: ${errorMessage}`, 
+          'AUTH_ERROR', 
+          'openai'
+        );
+      }
+      
+      // Handle server errors (500, 502, 504)
+      if (errorMessage.includes('500') || 
+          errorMessage.includes('502') || 
+          errorMessage.includes('504') ||
+          errorMessage.includes('internal server error') ||
+          errorMessage.includes('bad gateway') ||
+          errorMessage.includes('gateway timeout')) {
+        
+        // DCR-4: Open circuit breaker on consecutive server errors
+        if (this.consecutiveFailures >= this.maxConsecutiveFailures) {
+          this.circuitBreakerOpen = true;
+          this.circuitBreakerResetTime = new Date(Date.now() + this.circuitBreakerTimeoutMs);
+        }
+        
+        throw new ApiError(
+          `OpenAI server error: ${errorMessage}`, 
+          'SERVER_ERROR', 
+          'openai'
+        );
+      }
+      
+      // Handle timeout errors
+      if (errorMessage.includes('timeout') || 
+          errorMessage.includes('TIMEOUT') ||
+          errorMessage.includes('ECONNRESET') ||
+          errorMessage.includes('ENOTFOUND')) {
+        
+        throw new ApiError(
+          `OpenAI request timeout: ${errorMessage}`, 
+          'TIMEOUT_ERROR', 
+          'openai'
+        );
+      }
+      
+      // DCR-4: Open circuit breaker on excessive consecutive failures
+      if (this.consecutiveFailures >= this.maxConsecutiveFailures) {
+        this.circuitBreakerOpen = true;
+        this.circuitBreakerResetTime = new Date(Date.now() + this.circuitBreakerTimeoutMs);
+      }
+      
+      // Generic API error for unhandled cases
       throw new ApiError(`OpenAI analysis failed: ${errorMessage}`, 'OPENAI_API_ERROR', 'openai');
     }
   }
@@ -145,14 +262,14 @@ export class OpenAIService implements ApiProvider {
 
 Analysis Type: ${analysisType}
 
-Attempted Approaches:
-${context.attemptedApproaches.map(approach => `- ${approach}`).join('\n')}
+      ## Attempted Approaches
+${context.attemptedApproaches.map((approach: string) => `- ${approach}`).join('\n')}
 
-Current Findings:
-${context.partialFindings.map(finding => `- ${finding.description} (${finding.severity})`).join('\n')}
+      ## Partial Findings
+${context.partialFindings.map((finding: any) => `- ${finding.description} (${finding.severity})`).join('\n')}
 
-Stuck Points:
-${context.stuckPoints.map(point => `- ${point}`).join('\n')}
+      ## Where We Got Stuck
+${context.stuckPoints.map((point: string) => `- ${point}`).join('\n')}
 
 Focus Area Files:
 ${context.focusArea.files.join(', ')}
@@ -307,7 +424,7 @@ Respond in JSON format with the following structure:
   private estimateInputTokens(context: ClaudeCodeContext): number {
     const baseTokens = 500; // Base prompt tokens
     const approachTokens = context.attemptedApproaches.join(' ').length / 4;
-    const findingTokens = context.partialFindings.map(f => f.description).join(' ').length / 4;
+    const findingTokens = context.partialFindings.map((f: any) => f.description).join(' ').length / 4;
     const stuckTokens = context.stuckPoints.join(' ').length / 4;
     const fileTokens = context.focusArea.files.length * 10;
 
@@ -323,16 +440,46 @@ Respond in JSON format with the following structure:
 
   /**
    * Get service health information
+   * DCR-4 Enhancement: Circuit breaker and service health metrics
    */
   getHealthInfo(): Record<string, any> {
     return {
       name: this.name,
       priority: this.priority,
-      available: this.rateLimitRemaining > 0 && new Date() >= this.rateLimitResetTime,
+      available: this.rateLimitRemaining > 0 && new Date() >= this.rateLimitResetTime && !this.circuitBreakerOpen,
       rateLimitRemaining: this.rateLimitRemaining,
       rateLimitResetTime: this.rateLimitResetTime,
       requestCount: this.requestCount,
-      model: this.config.model
+      model: this.config.model,
+      // DCR-4: Enhanced health metrics
+      circuitBreaker: {
+        open: this.circuitBreakerOpen,
+        resetTime: this.circuitBreakerResetTime,
+        consecutiveFailures: this.consecutiveFailures,
+        maxFailures: this.maxConsecutiveFailures
+      },
+      serviceHealth: {
+        lastSuccessTime: this.lastSuccessTime,
+        serviceUnavailableCount: this.serviceUnavailableCount,
+        uptimeStatus: this.getUptimeStatus()
+      }
     };
+  }
+
+  /**
+   * DCR-4: Get service uptime status
+   */
+  private getUptimeStatus(): string {
+    const timeSinceLastSuccess = Date.now() - this.lastSuccessTime.getTime();
+    
+    if (this.circuitBreakerOpen) {
+      return 'circuit_breaker_open';
+    } else if (timeSinceLastSuccess > 300000) { // 5 minutes
+      return 'degraded';
+    } else if (this.consecutiveFailures > 0) {
+      return 'partial_failure';
+    } else {
+      return 'healthy';
+    }
   }
 }

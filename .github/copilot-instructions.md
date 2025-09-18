@@ -207,3 +207,7 @@ src/utils/MemoryManagementProtocol.ts  → Core memory management system (490 li
 - **CI/CD Automation**: Missing production deployment pipelines with quality gates
 
 Whenever a new update occurs, it's absolutely necessary to check and update the documentation files located in `./.github/.copilot_intructions.md` to ensure they accurately reflect the latest code changes and architectural decisions. This helps maintain clarity and consistency for all future developers interacting with the codebase.
+
+# Important
+
+**Use timeout with npm, npx and similar**

@@ -21,11 +21,11 @@ describe('ConversationManager Locking', () => {
     manager.destroy();
   });
 
-  it('should acquire lock on active session', () => {
+  it('should acquire lock on active session', async () => {
     const sessionId = manager.createSession(testContext);
     
     // First lock should succeed
-    const firstLock = manager.acquireLock(sessionId);
+    const firstLock = await manager.acquireLock(sessionId);
     expect(firstLock).toBe(true);
     
     // Verify session is now processing
@@ -33,23 +33,23 @@ describe('ConversationManager Locking', () => {
     expect(session?.status).toBe('processing');
     
     // Second lock should fail
-    const secondLock = manager.acquireLock(sessionId);
+    const secondLock = await manager.acquireLock(sessionId);
     expect(secondLock).toBe(false);
   });
 
-  it('should release lock properly', () => {
+  it('should release lock properly', async () => {
     const sessionId = manager.createSession(testContext);
     
     // Acquire and release lock
-    expect(manager.acquireLock(sessionId)).toBe(true);
+    expect(await manager.acquireLock(sessionId)).toBe(true);
     manager.releaseLock(sessionId);
     
     // Should be able to acquire again
-    expect(manager.acquireLock(sessionId)).toBe(true);
+    expect(await manager.acquireLock(sessionId)).toBe(true);
   });
 
-  it('should not acquire lock on non-existent session', () => {
-    const result = manager.acquireLock('non-existent-id');
+  it('should not acquire lock on non-existent session', async () => {
+    const result = await manager.acquireLock('non-existent-id');
     expect(result).toBe(false);
   });
 
@@ -63,10 +63,10 @@ describe('ConversationManager Locking', () => {
     // Create 5 concurrent lock attempts
     for (let i = 0; i < 5; i++) {
       operations.push(
-        new Promise((resolve) => {
+        new Promise(async (resolve) => {
           // Small random delay to simulate real concurrent access
-          setTimeout(() => {
-            const acquired = manager.acquireLock(sessionId);
+          setTimeout(async () => {
+            const acquired = await manager.acquireLock(sessionId);
             if (acquired) {
               successCount++;
               // Simulate some work

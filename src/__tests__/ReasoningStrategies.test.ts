@@ -189,7 +189,7 @@ describe('DeepAnalysisStrategy', () => {
     // Mock environment configuration
     mockEnvironmentValidator.getValidatedConfig.mockReturnValue({
       geminiApiKey: 'test-api-key',
-      geminiModel: 'gemini-2.5-pro-preview-06-05',
+      geminiModel: 'gemini-2.5-flash',
       geminiTemperature: 0.2,
       geminiTopK: 1,
       geminiTopP: 1,
@@ -345,7 +345,7 @@ describe('QuickAnalysisStrategy', () => {
     // Mock environment configuration
     mockEnvironmentValidator.getValidatedConfig.mockReturnValue({
       geminiApiKey: 'test-api-key',
-      geminiModel: 'gemini-2.5-pro-preview-06-05',
+      geminiModel: 'gemini-2.5-flash',
       geminiTemperature: 0.1,
       geminiTopK: 1,
       geminiTopP: 0.8,

@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ConversationManager, ConversationState } from '../services/conversation-manager.js';
+import { ConversationManager } from '../services/conversation-manager.js';
 import type { ClaudeCodeContext } from '../models/types.js';
 
 describe('ConversationManager', () => {
   let manager: ConversationManager;
-  let mockGeminiSession: any;
+  let _mockGeminiSession: any;
 
   const testContext: ClaudeCodeContext = {
     attemptedApproaches: ['Approach 1'],
@@ -20,7 +20,7 @@ describe('ConversationManager', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     manager = new ConversationManager();
-    mockGeminiSession = {
+    _mockGeminiSession = {
       sendMessage: vi.fn(),
     };
   });
@@ -61,7 +61,7 @@ describe('ConversationManager', () => {
   describe('getSession', () => {
     it('should retrieve existing session', () => {
       const sessionId = manager.createSession(testContext);
-      const created = manager.getSession(sessionId);
+      const _created = manager.getSession(sessionId);
       const retrieved = manager.getSession(sessionId);
 
       expect(retrieved!.sessionId).toEqual(sessionId);
@@ -216,9 +216,9 @@ describe('ConversationManager', () => {
     });
 
     it('should count only active sessions', () => {
-      const sessionId1 = manager.createSession(testContext);
+      const _sessionId1 = manager.createSession(testContext);
       const sessionId2 = manager.createSession(testContext);
-      const sessionId3 = manager.createSession(testContext);
+      const _sessionId3 = manager.createSession(testContext);
 
       expect(manager.getActiveSessionCount()).toBe(3);
 

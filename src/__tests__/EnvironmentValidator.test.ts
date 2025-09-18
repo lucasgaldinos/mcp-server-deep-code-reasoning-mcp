@@ -183,7 +183,7 @@ describe('EnvironmentValidator', () => {
       expect(config.nodeEnv).toBe('development');
       expect(config.mcpServerName).toBe('deep-code-reasoning-mcp');
       expect(config.mcpServerVersion).toBe('0.1.0');
-      expect(config.geminiModel).toBe('gemini-2.5-pro-preview-06-05');
+      expect(config.geminiModel).toBe('gemini-2.5-flash');
       expect(config.geminiTemperature).toBe(0.2);
       expect(config.defaultAnalysisDepth).toBe(3);
       expect(config.maxAnalysisDepth).toBe(5);
