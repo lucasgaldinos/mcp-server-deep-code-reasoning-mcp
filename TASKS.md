@@ -2,7 +2,7 @@
 
 ## 🎉 **PHASE 1 COMPLETE: TypeScript Path Resolution** ✅
 
-### **Major Achievement: 31% Error Reduction** 
+### **Major Achievement: 31% Error Reduction**
 
 **Before**: 74 errors (TypeScript + Markdown violations)  
 **After**: 51 errors (only Markdown linting violations remain)  
@@ -10,44 +10,16 @@
 
 ---
 
-## 🔄 **PHASE 2: CURRENT FOCUS - Markdown Linting Resolution**
-
-### **Objective**: Eliminate remaining 51 markdown linting violations using systematic MCP-assisted analysis
-
-**Strategy**: 
-- Use deep-code-reasoning MCP tools for complex pattern analysis
-- Leverage web search for latest markdown-lint best practices  
-- Implement automated quality gates to prevent future violations
-
-### **Current Tasks**:
-
-- [ ] **Analyze markdown linting violations systematically**
-  - Use `hypothesis_test` to identify root cause patterns
-  - Categorize violations by type and complexity
-  - Create fix implementation strategy
-
-- [ ] **Research latest markdown-lint best practices**
-  - Use `vscode-websearchforcopilot_webSearch` for current standards
-  - Use `fetch_webpage` to gather comprehensive rule documentation
-  - Identify automated fix opportunities
-
-- [ ] **Implement batch fixes for markdown violations**
-  - Apply systematic fixes for common violation patterns
-  - Test automated linting integration
-
-- [ ] **Integrate quality gates**
-  - Enable markdown-lint in pre-commit hooks
-  - Set up automated quality enforcement
-  - Activate existing QualityAssurance.ts infrastructure
 ## 🚨 **RESOLVED CRITICAL TASKS** ✅
 
 ### 1. Fix TypeScript Compilation Issue ✅ **RESOLVED**
+
 **Status**: FIXED - TypeScript compilation working correctly
 
 **Resolution Summary**:
 
-  - Configuration: baseUrl ".", paths mapping @/* to src/* patterns
-  - Impact: Fixed all "@utils", "@services", "@models" import errors
+- Configuration: baseUrl ".", paths mapping @/*to src/* patterns
+- Impact: Fixed all "@utils", "@services", "@models" import errors
 
 - ✅ **jsconfig.json created**: JavaScript file path resolution support
   - Impact: Consistent IDE behavior across .ts and .js files
@@ -62,7 +34,6 @@
 2. **Expected Behavior**: deepReasoner remains null without valid API key (by design) ✅ **CONFIRMED**
 3. **Session Issues**: Conversational tools have race condition problems in session management ✅ **FIXED**
 
-
 ### 🧪 **MCP TOOL TESTING RESULTS** (September 17, 2025)
 
 #### ✅ **Working Tools (8/14 confirmed functional)**
@@ -73,7 +44,6 @@
 - ✅ `health_summary` - Health status aggregation  
 - ✅ `get_model_info` - Model configuration display
 - ✅ `set_model` - Model switching functionality
-
 
 - ✅ `hypothesis_test` - Deep semantic analysis working
 - ✅ `trace_execution_path` - Code execution tracing
@@ -94,6 +64,7 @@
 5. **DCR-5: Quality Infrastructure** - Activate existing quality tools
 
 **Architecture Goal**: `VS Code Copilot → MCP Server → [Gemini API | OpenAI API | Future: Local Models]`
+
 ### DCR-1: Fix Session Race Conditions ✅ **IMPLEMENTED SUCCESSFULLY**
 
 **Problem**: Conversational tools failing with "Session is currently processing another request"
@@ -202,7 +173,7 @@ class ProviderManager {
 
 ---
 
-### 2. Activate Quality Infrastructure ⚠️ **PREVENT FUTURE ISSUES** → **DCR-5**
+### DCR-5 ⚠️ **PREVENT FUTURE ISSUES** → **DCR-5**
 
 **Problem**: 207 ESLint errors despite having sophisticated quality tools built
 
@@ -239,7 +210,7 @@ npx tsx src/testing/PerformanceBenchmark.ts --mode development
 
 ---
 
-### 3. Workspace Structure Cleanup 📁 **ORGANIZATIONAL DEBT**
+### DCR-6 📁 **ORGANIZATIONAL DEBT**
 
 **Problem**: 25+ loose files in root directory violating established structure rules
 
@@ -281,7 +252,36 @@ ls -la | grep -v "^d" | wc -l
 
 ## 🎯 **PHASE 2: OPTIMIZATION TASKS** (After Critical Issues)
 
-### 4. Complete MCP Tool Testing ✅ **12/12 TOOLS READY**
+### DCR-7 Eliminate remaining 51 markdown linting violations using systematic MCP-assisted analysis
+
+**Strategy**:
+
+- Use deep-code-reasoning MCP tools for complex pattern analysis
+- Leverage web search for latest markdown-lint best practices  
+- Implement automated quality gates to prevent future violations
+
+### **Current Tasks**
+
+- [ ] **Analyze markdown linting violations systematically**
+  - Use `hypothesis_test` to identify root cause patterns
+  - Categorize violations by type and complexity
+  - Create fix implementation strategy
+
+- [ ] **Research latest markdown-lint best practices**
+  - Use `vscode-websearchforcopilot_webSearch` for current standards
+  - Use `fetch_webpage` to gather comprehensive rule documentation
+  - Identify automated fix opportunities
+
+- [ ] **Implement batch fixes for markdown violations**
+  - Apply systematic fixes for common violation patterns
+  - Test automated linting integration
+
+- [ ] **Integrate quality gates**
+  - Enable markdown-lint in pre-commit hooks
+  - Set up automated quality enforcement
+  - Activate existing QualityAssurance.ts infrastructure
+
+### DCR-8 Complete MCP Tool Testing ✅ **12/12 TOOLS READY**
 
 **Current Status**: All tools working at schema level, some rate-limited
 
@@ -306,7 +306,7 @@ ls -la | grep -v "^d" | wc -l
 
 ---
 
-### 5. Documentation Updates 📚 **USER EXPERIENCE**
+### DCR-9 Documentation Updates 📚 **USER EXPERIENCE**
 
 **Priority Documentation Tasks**:
 
@@ -327,7 +327,7 @@ ls -la | grep -v "^d" | wc -l
 
 ---
 
-### 6. Performance & Reliability Improvements 🚀 **PRODUCTION READINESS**
+### DCR-10 Performance & Reliability Improvements 🚀 **PRODUCTION READINESS**
 
 **API Resilience Tasks**:
 
@@ -345,6 +345,56 @@ ls -la | grep -v "^d" | wc -l
    - Improve error messages for common failure scenarios
    - Add validation for file existence in file-dependent tools
    - Create comprehensive error recovery workflows
+
+---
+
+### DCR-11 Change to TypeScript **PROACTIVE MAINTENANCE**
+
+**Problem**: Some legacy JavaScript files remain, causing inconsistent IDE behavior. Some files still use `.js` extension instead of `.ts`.
+
+---
+
+#### DCR-11 Implementation Plan (TypeScript Migration & Enforcement)
+
+**Objectives**:
+- Eliminate residual `.js` sources under `src/` (except explicit, justified exceptions)
+- Standardize all internal automation scripts to `.ts`
+- Introduce automated enforcement preventing regression
+
+**Workflow Phases**:
+1. Inventory existing `.js` files (src/, scripts/, root)
+2. Classify each file: (migrate | keep (tooling constraint) | ignore (generated))
+3. Migrate: rename to `.ts`, add/strengthen typings, adjust relative & alias imports
+4. Add enforcement script `scripts/development/enforce-typescript-sources.ts`
+5. Add npm script: `"enforce:typescript": "tsx scripts/development/enforce-typescript-sources.ts"`
+6. Integrate into quality gates & pre-commit hook
+7. Update documentation (TODO.md, TASKS.md) & mark DCR-11 complete
+
+**Enforcement Rules**:
+- Disallow: Any `src/**/*.js` (except `__mocks__/**` or documented vendor shims)
+- Disallow: `scripts/**/*.js` (all must be TS)
+- Allow: Config files required by tools (e.g., `jest.config.js`, `eslint.config.js`), build metadata, `.husky/*`
+- Ignore: `dist/**`, `node_modules/**`, `coverage/**`
+
+**Proposed Enforcement Script Logic (Pseudo)**:
+```ts
+const disallowed = globSync('src/**/*.js', { ignore: ['**/__mocks__/**'] });
+if (disallowed.length) { console.error('❌ Disallowed JS files found:', disallowed); process.exit(1); }
+```
+
+**Success Criteria**:
+- 0 disallowed `.js` files under `src/`
+- CI / quality gates fail if a new one is introduced
+- TypeScript build + lint pass post-migration
+- Documentation updated reflecting enforcement
+
+**Action Checklist (DCR-11)**:
+- [ ] Inventory & classification report added to TASKS.md
+- [ ] Migrate each classified file to `.ts`
+- [ ] Add enforcement script & npm command
+- [ ] Hook into pre-commit / quality:enforce
+- [ ] Run full validation workflow (typecheck, build, tests, lint)
+- [ ] Update docs & close DCR-11
 
 ---
 
