@@ -10,11 +10,16 @@ export class InputValidator {
     .max(2000)
     .regex(/^[^<>{}]*$/, 'String contains potentially unsafe characters');
 
-  // Safe filename schema
+  // Safe filename schema - supports both relative and absolute paths for cross-workspace analysis
   static readonly SafeFilename = z.string()
-    .max(255)
-    .regex(/^[a-zA-Z0-9._\-/]+$/, 'Invalid filename format')
-    .refine(path => !path.includes('..'), 'Path traversal detected');
+    .max(500) // Increased for absolute paths
+    .regex(/^[a-zA-Z0-9._\-/~:]+$/, 'Invalid filename format - only alphanumeric, dots, dashes, slashes, tildes, and colons allowed')
+    .refine(path => !path.includes('..'), 'Path traversal detected')
+    .refine(path => {
+      // Additional security: block suspicious paths
+      const suspiciousPaths = ['/etc/passwd', '/etc/shadow', '/proc/', '/sys/', '/dev/'];
+      return !suspiciousPaths.some(suspicious => path.toLowerCase().includes(suspicious));
+    }, 'Access to system files not allowed');
 
   // Array of safe strings
   static readonly SafeStringArray = z.array(this.SafeString).max(100);

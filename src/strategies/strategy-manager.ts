@@ -10,8 +10,8 @@
  */
 
 import { IReasoningStrategy, IAnalysisContext, IAnalysisResult } from './reasoning-strategy.js';
-import { DeepAnalysisStrategy } from './DeepAnalysisStrategy.js';
-import { QuickAnalysisStrategy } from './QuickAnalysisStrategy.js';
+import { DeepAnalysisStrategy } from './deep-analysis-strategy.js';
+import { QuickAnalysisStrategy } from './quick-analysis-strategy.js';
 import { createLogger } from '@utils/structured-logger.js';
 
 /**

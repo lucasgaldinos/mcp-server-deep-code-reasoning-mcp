@@ -17,9 +17,10 @@ import {
 import { z } from 'zod';
 import * as dotenv from 'dotenv';
 
-import { DeepCodeReasonerV2 } from '@analyzers/DeepCodeReasonerV2.js';
+import { DeepCodeReasonerV2 } from '@analyzers/deep-code-reasoner-v2.js';
 import { ApiManager, ApiManagerConfig, ApiProvider } from '@services/api-manager.js';
 import { GeminiService } from '@services/gemini-service.js';
+import { MultiModelService } from '@services/multi-model-service.js';
 import { OpenAIService } from '@services/openai-service.js';
 import type { ClaudeCodeContext } from '@models/types.js';
 import { ErrorClassifier } from '@utils/error-classifier.js';
@@ -86,6 +87,9 @@ if (GEMINI_API_KEY) {
   // Initialize multi-provider API manager
   const providers: ApiProvider[] = [new GeminiService(GEMINI_API_KEY)];
   
+  // Add multi-model fallback service
+  providers.push(new MultiModelService());
+  
   // Add OpenAI provider if API key is available
   if (envConfig.openaiApiKey) {
     providers.push(new OpenAIService({
@@ -95,9 +99,9 @@ if (GEMINI_API_KEY) {
       temperature: 0.1,
       timeout: 30000
     }));
-    logger.info('Multi-provider support enabled: Gemini + OpenAI');
+    logger.info('Multi-provider support enabled: Gemini + OpenAI + Multi-Model');
   } else {
-    logger.info('Single-provider mode: Gemini only (add OPENAI_API_KEY for multi-provider support)');
+    logger.info('Provider support: Gemini + Multi-Model fallback (add OPENAI_API_KEY for additional options)');
   }
   
   // Configure ApiManager for intelligent fallback
@@ -168,10 +172,10 @@ const ClaudeCodeContextSchema = z.object({
  * @type {z.ZodObject}
  */
 const RunHypothesisTournamentSchemaFlat = z.object({
-  attempted_approaches: z.array(z.string()).describe('What VS Code already tried'),
-  partial_findings: z.array(z.any()).describe('Any findings VS Code discovered'),
-  stuck_description: z.array(z.string()).describe('Description of where VS Code got stuck'),
-  code_scope: z.object({
+  attemptedApproaches: z.array(z.string()).describe('What VS Code already tried'),
+  partialFindings: z.array(z.any()).describe('Any findings VS Code discovered'),
+  stuckDescription: z.array(z.string()).describe('Description of where VS Code got stuck'),
+  codeScope: z.object({
     files: z.array(z.string()).describe('Files to analyze'),
     entryPoints: z.array(z.object({
       file: z.string(),
@@ -194,10 +198,10 @@ const RunHypothesisTournamentSchemaFlat = z.object({
  * @type {z.ZodObject}
  */
 const EscalateAnalysisSchemaFlat = z.object({
-  attempted_approaches: z.array(z.string()).describe('What VS Code already tried'),
-  partial_findings: z.array(z.any()).describe('Any findings VS Code discovered'),
-  stuck_description: z.array(z.string()).describe('Description of where VS Code got stuck'),
-  code_scope: z.object({
+  attemptedApproaches: z.array(z.string()).describe('What VS Code already tried'),
+  partialFindings: z.array(z.any()).describe('Any findings VS Code discovered'),
+  stuckDescription: z.array(z.string()).describe('Description of where VS Code got stuck'),
+  codeScope: z.object({
     files: z.array(z.string()).describe('Files to analyze'),
     entryPoints: z.array(z.object({
       file: z.string(),
@@ -338,22 +342,22 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            attempted_approaches: {
+            attemptedApproaches: {
               type: 'array',
               items: { type: 'string' },
               description: 'What VS Code already tried',
             },
-            partial_findings: {
+            partialFindings: {
               type: 'array',
               items: { type: 'object' },
               description: 'Any findings VS Code discovered',
             },
-            stuck_description: {
+            stuckDescription: {
               type: 'array',
               items: { type: 'string' },
               description: 'Description of where VS Code got stuck',
             },
-            code_scope: {
+            codeScope: {
               type: 'object',
               properties: {
                 files: {
@@ -400,7 +404,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: 'Maximum time for analysis',
             },
           },
-          required: ['attempted_approaches', 'partial_findings', 'stuck_description', 'code_scope', 'analysisType', 'depthLevel'],
+          required: ['attemptedApproaches', 'partialFindings', 'stuckDescription', 'codeScope', 'analysisType', 'depthLevel'],
         },
       },
       {
@@ -597,22 +601,22 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            attempted_approaches: {
+            attemptedApproaches: {
               type: 'array',
               items: { type: 'string' },
               description: 'What VS Code already tried',
             },
-            partial_findings: {
+            partialFindings: {
               type: 'array',
               items: { type: 'object' },
               description: 'Any findings VS Code discovered',
             },
-            stuck_description: {
+            stuckDescription: {
               type: 'array',
               items: { type: 'string' },
               description: 'Description of where VS Code got stuck',
             },
-            code_scope: {
+            codeScope: {
               type: 'object',
               properties: {
                 files: {
@@ -670,7 +674,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               },
             },
           },
-          required: ['attempted_approaches', 'partial_findings', 'stuck_description', 'code_scope', 'issue'],
+          required: ['attemptedApproaches', 'partialFindings', 'stuckDescription', 'codeScope', 'issue'],
         },
       },
       {
@@ -745,13 +749,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         // Transform flat VS Code format to internal ClaudeCodeContext format
         const analysisContext: ClaudeCodeContext = {
-          attemptedApproaches: parsed.attempted_approaches,
-          partialFindings: parsed.partial_findings,
-          stuckPoints: parsed.stuck_description,
+          attemptedApproaches: parsed.attemptedApproaches,
+          partialFindings: parsed.partialFindings,
+          stuckPoints: parsed.stuckDescription,
           focusArea: {
-            files: parsed.code_scope.files,
-            entryPoints: parsed.code_scope.entryPoints || [],
-            serviceNames: parsed.code_scope.serviceNames || [],
+            files: parsed.codeScope.files,
+            entryPoints: parsed.codeScope.entryPoints || [],
+            serviceNames: parsed.codeScope.serviceNames || [],
           },
           analysisBudgetRemaining: parsed.timeBudgetSeconds,
         };
@@ -1055,13 +1059,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         // Transform flat VS Code format to internal ClaudeCodeContext format
         const analysisContext: ClaudeCodeContext = {
-          attemptedApproaches: parsed.attempted_approaches,
-          partialFindings: parsed.partial_findings,
-          stuckPoints: parsed.stuck_description,
+          attemptedApproaches: parsed.attemptedApproaches,
+          partialFindings: parsed.partialFindings,
+          stuckPoints: parsed.stuckDescription,
           focusArea: {
-            files: parsed.code_scope.files,
-            entryPoints: parsed.code_scope.entryPoints || [],
-            serviceNames: parsed.code_scope.serviceNames || [],
+            files: parsed.codeScope.files,
+            entryPoints: parsed.codeScope.entryPoints || [],
+            serviceNames: parsed.codeScope.serviceNames || [],
           },
           analysisBudgetRemaining: 300, // 5 minutes for tournament
         };

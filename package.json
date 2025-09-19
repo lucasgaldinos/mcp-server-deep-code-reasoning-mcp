@@ -42,7 +42,8 @@
 		"docker:build": "tsx scripts/deployment/docker-build.ts",
 		"docker:local": "tsx scripts/deployment/deploy.ts local",
 		"deploy:staging": "tsx scripts/deployment/deploy.ts staging",
-		"deploy:production": "tsx scripts/deployment/deploy.ts production"
+		"deploy:production": "tsx scripts/deployment/deploy.ts production",
+		"setup:vscode": "scripts/development/setup-vscode-integration.sh"
 	},
 	"keywords": [
 		"mcp",
@@ -64,11 +65,15 @@
 	},
 	"homepage": "https://github.com/lucasgaldinos/mcp-server-deep-code-reasoning-mcp#readme",
 	"dependencies": {
+		"@ai-sdk/anthropic": "^2.0.17",
+		"@ai-sdk/google": "^2.0.14",
+		"@ai-sdk/openai": "^2.0.32",
 		"@google/generative-ai": "^0.24.1",
 		"@modelcontextprotocol/sdk": "^1.12.3",
-		"@types/node": "^20.0.0",
 		"@types/node-cache": "^4.1.3",
 		"@types/uuid": "^10.0.0",
+		"ai": "^5.0.47",
+		"ai-fallback": "^1.0.7",
 		"dotenv": "^16.3.1",
 		"node-cache": "^5.1.2",
 		"uuid": "^11.1.0",
@@ -76,6 +81,7 @@
 	},
 	"devDependencies": {
 		"@types/jest": "^29.5.0",
+		"@types/node": "^24.5.2",
 		"@typescript-eslint/eslint-plugin": "^6.21.0",
 		"@typescript-eslint/eslint-plugin-tslint": "^7.0.2",
 		"@typescript-eslint/parser": "^6.21.0",
@@ -95,8 +101,9 @@
 		"markdownlint-cli": "^0.45.0",
 		"prettier": "^3.6.2",
 		"ts-jest": "^29.1.0",
+		"ts-node": "^10.9.2",
 		"tsc-alias": "^1.8.16",
-		"tsx": "^4.0.0",
+		"tsx": "^4.20.5",
 		"typescript": "^5.0.0",
 		"vitest": "^3.2.4"
 	}

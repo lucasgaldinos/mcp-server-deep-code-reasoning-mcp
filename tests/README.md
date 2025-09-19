@@ -1,52 +1,84 @@
----
-title: Tests Directory
-description: Test suite for the Deep Code Reasoning MCP Server
-status: published
-updated: 2025-01-09
-tags: [tests, testing, quality-assurance]
----
+# Testing Architecture for Deep Code Reasoning MCP
 
-# Tests Directory
+This document explains the comprehensive testing strategy used in the Deep Code Reasoning MCP server project.
 
-This directory contains the complete test suite for the Deep Code Reasoning MCP Server, organized by test type and scope.
+## Testing Directory Structure
 
-## Directory Structure
+### Overview
 
-### Unit Tests
+The project employs a three-tier testing architecture designed to separate concerns and provide comprehensive coverage:
 
-Located in `src/__tests__/` - Co-located with source code for immediate feedback during development.
+```
+src/
+├── __tests__/           # Unit tests co-located with source code
+├── testing/             # Testing infrastructure and frameworks
+tests/
+├── fixtures/            # Test data and scenarios
+```
 
-- Component-level tests
-- Service-level tests  
-- Utility function tests
-- Isolated behavior validation
+## Testing Directories Explained
 
-### Integration Tests (`integration/`)
+### 1. `src/__tests__/` - Unit Tests
 
-End-to-end and integration tests that verify component interactions.
+**Purpose**: Co-located unit tests that test individual components in isolation.
 
-- Server startup and MCP protocol tests
-- Gemini API integration tests
-- Conversation flow tests
-- Multi-service interaction tests
+**Contents**:
 
-### Fixtures (`fixtures/`)
+- Component-specific test files (e.g., `GeminiService.test.ts`)
+- Mock implementations in `__mocks__/` subdirectory
+- Integration tests that test multiple components together
+- Race condition and concurrency tests
 
-Test data, mock services, and reusable test components.
+**Testing Approach**:
 
-- Mock code scenarios
-- Sample analysis data
-- Test configuration files
-- Reusable test utilities
+- Jest/Vitest framework with ES module support
+- Component isolation using dependency injection
+- Mock external services (Gemini API, file system)
+- Focus on business logic and component behavior
 
-## Test Categories
+**Examples**:
 
-### Current Test Files
+- `ConversationManager.test.ts` - Tests conversation session management
+- `GeminiService.test.ts` - Tests Gemini API integration with mocking
+- `race-condition.test.ts` - Tests concurrent access patterns
 
-#### Integration Tests
+### 2. `src/testing/` - Testing Infrastructure
 
-- `quick-test.js` - Basic server functionality validation
-- Additional integration tests (check `integration/` directory)
+**Purpose**: Testing frameworks, utilities, and infrastructure that support the testing process.
+
+**Contents**:
+
+- `integration-test-framework.ts` - Framework for end-to-end testing
+- `performance-benchmark.ts` - Performance testing and benchmarking tools
+- `quality-assurance.ts` - Code quality validation tools
+- `test-suite-runner.ts` - Orchestrates test execution across different types
+
+**Key Features**:
+
+- **Integration Test Framework**: Provides tools for testing complete workflows
+- **Performance Benchmarking**: Memory usage, execution time, and resource monitoring
+- **Quality Assurance**: Code coverage, complexity analysis, and quality metrics
+- **Test Suite Runner**: Coordinates unit, integration, and performance tests
+
+**Not Tests Themselves**: These are tools and frameworks that support testing, not test cases.
+
+### 3. `tests/` - Integration Tests and Fixtures
+
+**Purpose**: High-level integration tests, test scenarios, and shared test data.
+
+**Contents**:
+
+- `fixtures/` - Test data, mock scenarios, and sample code
+- Integration test files for complete system testing
+- End-to-end test scenarios
+- Performance test data and baselines
+
+**Testing Approach**:
+
+- Tests complete user workflows
+- Uses real or realistic test data from fixtures
+- May use external services in controlled environments
+- Focuses on system behavior and integration points
 
 #### Test Fixtures
 

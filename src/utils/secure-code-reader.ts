@@ -26,19 +26,60 @@ export class SecureCodeReader {
   /**
    * Validates that a file path is safe to read.
    * Prevents path traversal attacks and enforces file type restrictions.
+   * Supports cross-workspace analysis by allowing absolute paths to other repositories.
    */
   private async validatePath(filePath: string): Promise<string> {
-    // Resolve to absolute path
-    const absolutePath = path.resolve(this.projectRoot, filePath);
-
-    // Critical security check: ensure the resolved path is within project bounds
-    if (!absolutePath.startsWith(this.projectRoot + path.sep)) {
+    // Check for path traversal patterns before processing
+    if (filePath.includes('..') || filePath.includes('~')) {
       throw new FileSystemError(
         `Security violation: Path traversal attempt detected for ${filePath}`,
         'PATH_TRAVERSAL',
         filePath,
         'validate',
       );
+    }
+
+    let absolutePath: string;
+
+    // Handle absolute paths (cross-workspace analysis)
+    if (path.isAbsolute(filePath)) {
+      absolutePath = path.resolve(filePath);
+      
+      // Allow cross-workspace access for legitimate development directories
+      const allowedPrefixes = [
+        '/home',
+        '/Users', // macOS
+        '/workspace', // Common container path
+        '/project', // Common container path
+        '/src', // Common source directory
+        process.env.HOME || '', // User home directory
+      ].filter(Boolean);
+
+      const isAllowedPath = allowedPrefixes.some(prefix => 
+        absolutePath.startsWith(prefix + path.sep) || absolutePath === prefix
+      );
+
+      if (!isAllowedPath) {
+        throw new FileSystemError(
+          `Security violation: Access denied to system path ${filePath}`,
+          'ACCESS_DENIED',
+          filePath,
+          'validate',
+        );
+      }
+    } else {
+      // Handle relative paths (within project)
+      absolutePath = path.resolve(this.projectRoot, filePath);
+
+      // Ensure relative paths stay within project bounds
+      if (!absolutePath.startsWith(this.projectRoot + path.sep)) {
+        throw new FileSystemError(
+          `Security violation: Path traversal attempt detected for ${filePath}`,
+          'PATH_TRAVERSAL',
+          filePath,
+          'validate',
+        );
+      }
     }
 
     // Check file extension

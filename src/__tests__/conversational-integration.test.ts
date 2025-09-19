@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { DeepCodeReasonerV2 } from '../analyzers/DeepCodeReasonerV2.js';
+import { DeepCodeReasonerV2 } from '../analyzers/deep-code-reasoner-v2.js';
 import { ConversationManager } from '../services/conversation-manager.js';
 import type { ClaudeCodeContext } from '../models/types.js';
 

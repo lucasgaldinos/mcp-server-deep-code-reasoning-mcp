@@ -5,7 +5,7 @@
 
 import { Logger } from '@utils/logger.js';
 import { EventBus } from '@utils/event-bus.js';
-import { DeepCodeReasonerV2 } from '@analyzers/DeepCodeReasonerV2.js';
+import { DeepCodeReasonerV2 } from '@analyzers/deep-code-reasoner-v2.js';
 import { ConversationManager } from '@services/conversation-manager.js';
 import { GeminiService } from '@services/gemini-service.js';
 

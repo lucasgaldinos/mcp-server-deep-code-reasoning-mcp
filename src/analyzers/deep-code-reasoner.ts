@@ -11,9 +11,9 @@ import type {
   CodeLocation,
   SystemImpact,
 } from '../models/types.js';
-import { ExecutionTracer } from './ExecutionTracer.js';
-import { SystemBoundaryAnalyzer } from './SystemBoundaryAnalyzer.js';
-import { PerformanceModeler } from './PerformanceModeler.js';
+import { ExecutionTracer } from './execution-tracer.js';
+import { SystemBoundaryAnalyzer } from './system-boundary-analyzer.js';
+import { PerformanceModeler } from './performance-modeler.js';
 import { HypothesisTester } from './hypothesis-tester.js';
 
 // Local type definitions

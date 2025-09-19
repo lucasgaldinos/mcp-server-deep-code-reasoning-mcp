@@ -8,8 +8,8 @@ import {
   AnalysisType,
   BaseReasoningStrategy 
 } from '../strategies/reasoning-strategy.js';
-import { DeepAnalysisStrategy } from '../strategies/DeepAnalysisStrategy.js';
-import { QuickAnalysisStrategy } from '../strategies/QuickAnalysisStrategy.js';
+import { DeepAnalysisStrategy } from '../strategies/deep-analysis-strategy.js';
+import { QuickAnalysisStrategy } from '../strategies/quick-analysis-strategy.js';
 import { EnvironmentValidator } from '../utils/environment-validator.js';
 
 // Mock dependencies

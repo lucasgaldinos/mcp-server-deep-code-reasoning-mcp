@@ -19,6 +19,33 @@ This is an enhanced version of the original [haasonsaas/deep-code-reasoning-mcp]
 
 ### Added
 
+- **DCR-17: Comprehensive Codebase Cleanup and Reorganization**: Systematic cleanup of redundant files and standardization of naming conventions following workspace structure enforcement rules
+  - **Redundant File Removal**: Removed 19 redundant files including .disabled, .backup, .old, and empty .new.ts files that were not being used
+  - **Kebab-case Naming Convention**: Converted key PascalCase files to kebab-case following workspace standards (DeepAnalysisStrategy.ts → deep-analysis-strategy.ts, etc.)
+  - **Import Reference Updates**: Updated all import statements throughout the codebase to reference the new file names
+  - **Testing Structure Documentation**: Created comprehensive documentation for three-tier testing architecture:
+    - `src/__tests__/README.md` - Unit testing patterns and conventions
+    - `src/testing/README.md` - Testing infrastructure and frameworks explanation  
+    - `tests/README.md` - Integration tests and fixtures documentation
+  - **Duplicate Test File Resolution**: Resolved duplicate test-hypothesis.json files by maintaining the semantically correct version in fixtures/
+  - **Build System Validation**: Verified TypeScript compilation, test execution, and build processes work correctly after cleanup
+  - **Code Quality Improvement**: Eliminated file redundancy and improved project organization while maintaining full functionality
+
+- **DCR-16: Cross-Workspace Security Fix**: Enhanced path validation to enable secure cross-workspace file analysis
+  - **Enhanced Path Validation**: Updated SecureCodeReader to support absolute paths for cross-workspace analysis while maintaining security
+  - **Improved Input Validation**: Enhanced SafeFilename schema to handle cross-workspace paths securely with expanded allowed characters
+  - **Security Model Implementation**: Allow development directories (`/home/*`, `/Users/*`, `/workspace/*`) while blocking system files and path traversal attempts
+  - **Comprehensive Testing**: Verified fix works for legitimate cross-workspace access and blocks malicious attempts with automated test cases
+  - **Documentation Creation**: Created docs/guides/cross-workspace-analysis.md with usage examples, security considerations, and troubleshooting
+  - **API Documentation Updates**: Enhanced API documentation with cross-workspace capabilities and security model details
+
+- **DCR-15: VS Code MCP Integration Fix**: Comprehensive solution for critical VS Code Copilot Chat integration issues
+  - **Enhanced mcp.json Configuration**: Improved .vscode/mcp.json with better API key guidance and NODE_ENV configuration
+  - **Comprehensive Troubleshooting Guide**: Created docs/guides/vscode-integration-troubleshooting.md with system dependency installation, configuration examples, and validation steps
+  - **Automated Setup Script**: Built scripts/development/setup-vscode-integration.sh with colored output, dependency checking, and configuration validation
+  - **NPM Script Integration**: Added `npm run setup:vscode` for easy access to automated setup and validation process
+  - **Build System Validation**: Verified TypeScript compilation and server startup functionality work correctly
+
 - **DCR-13: Comprehensive Testing Infrastructure Implementation**: Modernized testing infrastructure using MCP deep-code-reasoning tools for systematic analysis and resolution
   - **MCP Tool Validation**: Successfully tested 11/14 MCP tools with 79% success rate
   - **Jest-to-Vitest Migration Strategy**: Established conversion template with ConfigurationManager.test.ts showing 83% test improvement (20/24 vs 0/24 passing)

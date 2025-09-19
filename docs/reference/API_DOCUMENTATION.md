@@ -33,6 +33,7 @@ tags: [api, documentation, mcp, tools, reference]
   - [Authentication](#authentication)
     - [API Key Configuration](#api-key-configuration)
     - [Security Considerations](#security-considerations)
+      - [File Access Security](#file-access-security)
   - [Rate Limits](#rate-limits)
   - [Performance Considerations](#performance-considerations)
     - [Context Budget Guidelines](#context-budget-guidelines)
@@ -424,6 +425,15 @@ export GEMINI_API_KEY=your_api_key_here
 - All file paths are validated to prevent path traversal attacks
 - Input sanitization is applied to all user inputs
 - Rate limiting is applied to prevent abuse
+- **Cross-workspace analysis**: Supports absolute paths to external repositories (see [Cross-Workspace Analysis Guide](../guides/cross-workspace-analysis.md))
+
+#### File Access Security
+
+The server implements a secure file access model:
+
+- **Allowed**: Development directories (`/home/*`, `/Users/*`, `/workspace/*`, `/project/*`)
+- **Blocked**: System files (`/etc/*`, `/proc/*`, `/sys/*`), path traversal (`../`)
+- **Validated**: All paths are validated against security policies before access
 
 ## Rate Limits
 
