@@ -1,0 +1,182 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build and Test Complete Workflow",
+      "type": "shell",
+      "command": "npm run typecheck && npm run lint && npm run build && npm test",
+      "args": [],
+      "isBackground": false,
+      "problemMatcher": [
+        "$tsc",
+        "$eslint-stylish"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "TypeScript Type Check",
+      "type": "shell",
+      "command": "npm run typecheck",
+      "isBackground": false,
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "Auto-Fix ESLint Issues",
+      "type": "shell",
+      "command": "npm run lint -- --fix",
+      "isBackground": false,
+      "problemMatcher": [
+        "$eslint-stylish"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "Fix ESLint Issues and Report Status",
+      "type": "shell",
+      "command": "npm run lint -- --fix && npm run lint",
+      "isBackground": false,
+      "problemMatcher": [
+        "$eslint-stylish"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "Complete Build Validation Workflow",
+      "type": "shell",
+      "command": "npm run typecheck && npm run build && npm test -- --passWithNoTests",
+      "isBackground": false,
+      "problemMatcher": [
+        "$tsc",
+        "$eslint-stylish"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "🚀 Complete Project Validation",
+      "type": "shell",
+      "command": "echo '🚀 Starting Complete Build Validation...' && npm run typecheck && echo '✅ TypeScript check passed' && npm run build && echo '✅ Build completed successfully' && npm test -- --passWithNoTests && echo '🎉 All validation steps completed successfully!'",
+      "isBackground": false,
+      "problemMatcher": [
+        "$tsc",
+        "$eslint-stylish"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "🤖 MCP Server for VS Code Copilot",
+      "type": "shell",
+      "command": "echo '🤖 Testing MCP Server with VS Code Copilot focus...' && npm test -- src/__tests__/real-api-integration.test.ts --verbose && echo '✅ MCP Server ready for VS Code Copilot integration!'",
+      "isBackground": false,
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🔧 Start MCP Development Server",
+      "type": "shell",
+      "command": "npm run dev",
+      "isBackground": true,
+      "problemMatcher": [
+        "$tsc-watch"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🧪 Safe Development Mode",
+      "type": "shell",
+      "command": "echo '🧪 Starting Safe Development Mode...' && npm run dev:safe && echo '✅ Safe development environment active!'",
+      "isBackground": true,
+      "problemMatcher": [
+        "$tsc-watch"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🛡️ Quality Enforcement",
+      "type": "shell",
+      "command": "npx tsx scripts/development/quality-enforcement.ts",
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔍 Quality Validation",
+      "type": "shell",
+      "command": "npx tsx scripts/development/quality-validation.ts",
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "⚡ Fast Quality Gates",
+      "type": "shell",
+      "command": "npx tsx scripts/development/quality-gates.ts fast",
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🚦 Full Quality Gates",
+      "type": "shell",
+      "command": "npx tsx scripts/development/quality-gates.ts full",
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

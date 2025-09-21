@@ -1,0 +1,37 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "🧪 Run Core Strategy Tests Only",
+			"type": "shell",
+			"command": "npm test -- --testPathPattern='strategy.*\\.test\\.ts$' --testTimeout=10000",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "🔧 Fix Jest Configuration",
+			"type": "shell",
+			"command": "echo 'Updating Jest configuration for globals...' && npm run lint -- --fix",
+			"isBackground": false,
+			"problemMatcher": ["$eslint"],
+			"group": "build"
+		},
+		{
+			"label": "⚡ Core Functionality Validation",
+			"type": "shell",
+			"command": "echo '⚡ Running core functionality validation...' && npm run typecheck && echo '✅ TypeScript validated' && npm run build && echo '✅ Build successful' && npm test -- --testNamePattern='strategy' --passWithNoTests && echo '🎉 Core tests passed!'",
+			"isBackground": false,
+			"problemMatcher": ["$tsc"],
+			"group": "test"
+		},
+		{
+			"label": "🚀 Complete Automation Demo",
+			"type": "shell",
+			"command": "echo '🚀 Starting Complete Automation Demo...' && echo '1️⃣ TypeScript validation...' && npm run typecheck && echo '2️⃣ ESLint validation...' && npm run lint && echo '3️⃣ Build process...' && npm run build && echo '4️⃣ Core strategy tests...' && npm test -- --testPathPattern='strategy.*\\.test\\.ts$' --verbose && echo '🎉 Automation demo completed successfully! All core functionality is working.'",
+			"isBackground": false,
+			"problemMatcher": ["$tsc", "$eslint"],
+			"group": "test"
+		}
+	]
+}

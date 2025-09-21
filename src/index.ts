@@ -397,6 +397,41 @@ const HealthSummarySchema = z.object({
   include_details: z.boolean().optional().default(true),
 });
 
+/**
+ * Generate dynamic schema for set_model tool based on available providers
+ */
+function generateSetModelSchema() {
+  // Define all possible models grouped by provider - always include all models
+  // regardless of API key status to allow discovery and configuration
+  const modelsByProvider: Record<string, string[]> = {
+    'gemini': ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'],
+    'openai': ['gpt-5', 'gpt-4-turbo', 'gpt-4o', 'gpt-4', 'gpt-3.5-turbo'],
+    'multi-model': ['copilot-chat']
+  };
+  
+  // Always include all models to allow discovery
+  // Users can configure API keys using the set_model tool itself
+  const allModels: string[] = [];
+  Object.values(modelsByProvider).forEach(models => {
+    allModels.push(...models);
+  });
+  
+  // Remove duplicates and ensure we have models
+  const uniqueModels = [...new Set(allModels)];
+  
+  return {
+    type: 'object',
+    properties: {
+      model: {
+        type: 'string',
+        enum: uniqueModels.length > 0 ? uniqueModels : ['gemini-2.5-pro'],
+        description: `The model to use for analysis. Available models: ${uniqueModels.join(', ')}. API keys can be configured dynamically.`,
+      },
+    },
+    required: ['model'],
+  };
+}
+
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
@@ -866,19 +901,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: 'set_model',
-        description: 'Change the Gemini model used for analysis',
+        name: 'get_available_models',
+        description: 'Get a simple list of all available model names for use with set_model',
         inputSchema: {
           type: 'object',
-          properties: {
-            model: {
-              type: 'string',
-              enum: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'],
-              description: 'The Gemini model to use for analysis',
-            },
-          },
-          required: [],
+          properties: {},
         },
+      },
+      {
+        name: 'set_model',
+        description: 'Change the AI model used for analysis (supports all available providers)',
+        inputSchema: generateSetModelSchema(),
       },
     ],
   };
@@ -1662,22 +1695,92 @@ This tool is now working and ready for integration with VS Code Copilot Chat. Th
         };
       }
 
+      case 'get_available_models': {
+        // Simple tool to get just the available model names for easy discovery
+        // Always show all models to enable discovery and configuration
+        const modelsByProvider: Record<string, string[]> = {
+          'gemini': ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'],
+          'openai': ['gpt-5', 'gpt-4-turbo', 'gpt-4o', 'gpt-4', 'gpt-3.5-turbo'],
+          'multi-model': ['copilot-chat']
+        };
+        
+        // Always include all models regardless of API key status
+        // This allows users to discover what models are available and configure accordingly
+        const availableModels: string[] = [];
+        Object.values(modelsByProvider).forEach(models => {
+          availableModels.push(...models);
+        });
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                availableModels,
+                totalCount: availableModels.length,
+                usage: 'Use any of these model names with the set_model tool',
+                examples: [
+                  'set_model with model="gemini-2.5-pro"',
+                  'set_model with model="gpt-5"',
+                  'set_model with model="copilot-chat"'
+                ],
+                moreInfo: 'Use get_model_info for detailed model specifications and pricing'
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
       case 'set_model': {
-        // Enhanced multi-provider model setting
+        // Enhanced multi-provider model setting with dynamic validation
         const inputModel = args?.model;
-        const model = (inputModel && typeof inputModel === 'string') ? inputModel : 'gemini-2.5-flash'; // Default model
+        const model = (inputModel && typeof inputModel === 'string') ? inputModel : '';
         
-        // Parse provider/model format (e.g., "openai/gpt-5" or just "gemini-2.5-pro")
-        const [provider, modelName] = model.includes('/') ? model.split('/') : ['gemini', model];
-        
-        // Validate provider and model combination with proper typing
+        if (!model) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  error: 'Model parameter is required',
+                  availableModels: apiManager ? apiManager.getAvailableModelNames() : [],
+                  usage: 'Provide model name (e.g., "gemini-2.5-pro", "gpt-5", "copilot-chat")'
+                }, null, 2),
+              },
+            ],
+          };
+        }
+
+        // Runtime validation using ApiManager as source of truth
+        if (apiManager && !apiManager.hasProvider(model)) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  error: `Invalid model: ${model}`,
+                  availableModels: apiManager.getAvailableModelNames(),
+                  message: 'Model not found in available providers',
+                  suggestion: 'Use get_model_info to see all available models and their details'
+                }, null, 2),
+              },
+            ],
+          };
+        }
+
+        // Fallback validation for when apiManager is not available
         const validModels: Record<string, string[]> = {
           gemini: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'],
           openai: ['gpt-5', 'gpt-4-turbo', 'gpt-4o', 'gpt-4', 'gpt-3.5-turbo'],
           github_copilot: ['copilot-chat']
         };
 
-        if (!(provider in validModels) || !validModels[provider].includes(modelName)) {
+        // Parse provider/model format for fallback validation
+        const [provider, modelName] = model.includes('/') ? model.split('/') : ['gemini', model];
+        
+        if (!apiManager && (!(provider in validModels) || !validModels[provider].includes(modelName))) {
           return {
             content: [
               {
@@ -1686,9 +1789,9 @@ This tool is now working and ready for integration with VS Code Copilot Chat. Th
                   success: false,
                   error: `Invalid model: ${model}`,
                   validFormats: [
-                    'gemini/gemini-2.5-pro',
-                    'openai/gpt-5', 
-                    'github_copilot/copilot-chat',
+                    'gemini-2.5-pro (or gemini/gemini-2.5-pro)',
+                    'gpt-5 (or openai/gpt-5)', 
+                    'copilot-chat (or github_copilot/copilot-chat)',
                     'gemini-2.5-flash (defaults to gemini provider)'
                   ],
                   availableModels: validModels

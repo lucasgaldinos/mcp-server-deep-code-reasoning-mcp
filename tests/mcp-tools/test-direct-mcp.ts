@@ -5,7 +5,6 @@
  */
 
 import { spawn } from 'child_process';
-import { setTimeout } from 'timers/promises';
 
 interface TestResult {
   name: string;
@@ -142,7 +141,7 @@ async function runTests() {
     }
     
     // Brief pause between tests
-    await setTimeout(500);
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
 
   // Summary

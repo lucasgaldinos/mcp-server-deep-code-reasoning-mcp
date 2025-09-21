@@ -79,8 +79,6 @@ async function testMCPTool(toolName: string, params: any): Promise<MCPResponse> 
       }
     }, 500); // Give server time to start
 
-    let initStep = 0; // 0 = not started, 1 = init sent, 2 = initialized notification sent, 3 = ready for tools
-
     // Send initialize request immediately when server starts
     setTimeout(() => {
       if (initStep === 0) {

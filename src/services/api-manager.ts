@@ -241,4 +241,102 @@ export class ApiManager {
       stats.totalTime = 0;
     });
   }
+
+  /**
+   * Get all available model names from registered providers
+   * This is the single source of truth for valid model names
+   */
+  getAvailableModelNames(): string[] {
+    // Return actual model names, not provider names
+    const validModelsByProvider: Record<string, string[]> = {
+      'gemini': ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'],
+      'openai': ['gpt-5', 'gpt-4-turbo', 'gpt-4o', 'gpt-4', 'gpt-3.5-turbo'],
+      'multi-model': ['copilot-chat']
+    };
+    
+    const availableModels: string[] = [];
+    
+    // Only include models for providers that are actually registered
+    for (const [providerName, models] of Object.entries(validModelsByProvider)) {
+      if (this.providers.has(providerName)) {
+        availableModels.push(...models);
+      }
+    }
+    
+    // If no providers are available, return all possible models for discovery
+    if (availableModels.length === 0) {
+      Object.values(validModelsByProvider).forEach(models => {
+        availableModels.push(...models);
+      });
+    }
+    
+    return availableModels;
+  }
+
+  /**
+   * Check if a specific model/provider exists
+   */
+  hasProvider(modelName: string): boolean {
+    // Handle provider/model format (e.g., "gemini/gemini-2.5-pro")
+    const [providerName, specificModel] = modelName.includes('/') ? modelName.split('/') : [null, modelName];
+    
+    // Define valid models for each provider
+    const validModelsByProvider: Record<string, string[]> = {
+      'gemini': ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'],
+      'openai': ['gpt-5', 'gpt-4-turbo', 'gpt-4o', 'gpt-4', 'gpt-3.5-turbo'],
+      'multi-model': ['copilot-chat']
+    };
+    
+    if (providerName) {
+      // Format: "provider/model" - check if provider exists and model is valid
+      return this.providers.has(providerName) && 
+             validModelsByProvider[providerName]?.includes(specificModel) || false;
+    } else {
+      // Format: "model" - check if any provider supports this model
+      for (const [provider, models] of Object.entries(validModelsByProvider)) {
+        if (models.includes(specificModel) && this.providers.has(provider)) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Get detailed information about a specific provider by model name
+   */
+  getProviderInfo(modelName: string): ApiProvider | undefined {
+    // Handle provider/model format (e.g., "gemini/gemini-2.5-pro")
+    const [providerName, specificModel] = modelName.includes('/') ? modelName.split('/') : [null, modelName];
+    
+    if (providerName) {
+      // Format: "provider/model" - return the specific provider
+      return this.providers.get(providerName);
+    } else {
+      // Format: "model" - find which provider supports this model
+      const validModelsByProvider: Record<string, string[]> = {
+        'gemini': ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'],
+        'openai': ['gpt-5', 'gpt-4-turbo', 'gpt-4o', 'gpt-4', 'gpt-3.5-turbo'],
+        'multi-model': ['copilot-chat']
+      };
+      
+      for (const [provider, models] of Object.entries(validModelsByProvider)) {
+        if (models.includes(specificModel) && this.providers.has(provider)) {
+          return this.providers.get(provider);
+        }
+      }
+      return undefined;
+    }
+  }
+
+  /**
+   * Get comprehensive model information for all providers
+   */
+  getAllProviderInfo(): Array<{ name: string; provider: ApiProvider; stats: any }> {
+    return Array.from(this.providers.entries()).map(([name, provider]) => ({
+      name,
+      provider,
+      stats: this.providerStats.get(name) || { calls: 0, failures: 0, totalTime: 0 }
+    }));
+  }
 }

@@ -1,0 +1,21 @@
+{
+    "terminal.integrated.gpuAcceleration": "on",
+    "chat.tools.terminal.autoApprove": {
+        "git mv": true,
+        // "npm run build": true,
+        "find": true,
+        // "npm run security:audit": true,
+        // "npm run lint": true,
+        // "npm run security-audit": true,
+        // "npm test": true,
+        "uv run": true,
+        "git checkout": true,
+        "npx": true,
+        "git add": true,
+        "git commit": true,
+        "git branch": true,
+        "}": true,
+        "mkdir": true,
+        "mv": true
+    },
+}
