@@ -4,8 +4,8 @@
  */
 
 export interface IEnvironmentConfig {
-  // Required configuration
-  geminiApiKey: string;
+  // Optional AI provider configuration
+  geminiApiKey?: string;
 
   // Optional multi-provider configuration
   openaiApiKey?: string;
@@ -109,7 +109,7 @@ export interface IValidationResult {
  */
 export class EnvironmentValidator {
   private static readonly REQUIRED_VARS = [
-    'GEMINI_API_KEY',
+    // No required API keys - providers are optional
   ];
 
   private static readonly DEFAULT_CONFIG: Partial<IEnvironmentConfig> = {
@@ -293,8 +293,8 @@ export class EnvironmentValidator {
    */
   private static buildConfig(): IEnvironmentConfig {
     return {
-      // Required configuration
-      geminiApiKey: process.env.GEMINI_API_KEY!,
+      // Optional AI provider configuration
+      geminiApiKey: process.env.GEMINI_API_KEY,
 
       // Optional multi-provider configuration
       openaiApiKey: process.env.OPENAI_API_KEY,
@@ -393,8 +393,8 @@ export class EnvironmentValidator {
   private static validateConfig(config: IEnvironmentConfig): string[] {
     const errors: string[] = [];
 
-    // Validate API key format
-    if (config.geminiApiKey === 'your-gemini-api-key-here' || config.geminiApiKey.length < 10) {
+    // Validate API key format if provided
+    if (config.geminiApiKey && (config.geminiApiKey === 'your-gemini-api-key-here' || config.geminiApiKey.length < 10)) {
       errors.push('GEMINI_API_KEY appears to be a placeholder or invalid');
     }
 
@@ -520,7 +520,15 @@ export class EnvironmentValidator {
     console.log('Environment Configuration Summary:');
     console.log(`  Node Environment: ${config.nodeEnv}`);
     console.log(`  MCP Server: ${config.mcpServerName} v${config.mcpServerVersion}`);
-    console.log(`  Gemini Model: ${config.geminiModel}`);
+    
+    // Provider availability
+    console.log('  AI Providers:');
+    console.log(`    Gemini: ${config.geminiApiKey ? 'Available' : 'Not configured'}`);
+    console.log(`    OpenAI: ${config.openaiApiKey ? 'Available' : 'Not configured'}`);
+    
+    if (config.geminiApiKey) {
+      console.log(`  Gemini Model: ${config.geminiModel}`);
+    }
     console.log(`  Max Context Size: ${config.maxContextSize.toLocaleString()}`);
     console.log(`  Analysis Depth: ${config.defaultAnalysisDepth} (max: ${config.maxAnalysisDepth})`);
     console.log(`  Log Level: ${config.logLevel}`);

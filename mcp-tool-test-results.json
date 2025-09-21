@@ -1,0 +1,172 @@
+{
+  "timestamp": "2025-09-20T22:38:07.226Z",
+  "totalTools": 17,
+  "workingTools": 0,
+  "failingTools": 17,
+  "results": [
+    {
+      "name": "debug_parameters",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "debug",
+      "expectedToWork": true
+    },
+    {
+      "name": "test_simple_tool",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "debug",
+      "expectedToWork": true
+    },
+    {
+      "name": "escalate_analysis",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "analysis",
+      "expectedToWork": true
+    },
+    {
+      "name": "escalate_analysis_minimal",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "analysis",
+      "expectedToWork": true
+    },
+    {
+      "name": "health_check",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "system",
+      "expectedToWork": true
+    },
+    {
+      "name": "health_summary",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "system",
+      "expectedToWork": true
+    },
+    {
+      "name": "get_model_info",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "system",
+      "expectedToWork": true
+    },
+    {
+      "name": "set_model",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "system",
+      "expectedToWork": true
+    },
+    {
+      "name": "trace_execution_path",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "analysis",
+      "expectedToWork": false
+    },
+    {
+      "name": "hypothesis_test",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "analysis",
+      "expectedToWork": false
+    },
+    {
+      "name": "cross_system_impact",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "analysis",
+      "expectedToWork": false
+    },
+    {
+      "name": "performance_bottleneck",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "analysis",
+      "expectedToWork": false
+    },
+    {
+      "name": "start_conversation",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "conversation",
+      "expectedToWork": false
+    },
+    {
+      "name": "continue_conversation",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "conversation",
+      "expectedToWork": false
+    },
+    {
+      "name": "finalize_conversation",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "conversation",
+      "expectedToWork": false
+    },
+    {
+      "name": "get_conversation_status",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "conversation",
+      "expectedToWork": false
+    },
+    {
+      "name": "run_hypothesis_tournament",
+      "success": false,
+      "responseReceived": false,
+      "errorMessage": "Test timeout after 10 seconds",
+      "category": "analysis",
+      "expectedToWork": false
+    }
+  ],
+  "summary": {
+    "byCategory": [
+      {
+        "category": "debug",
+        "total": 2,
+        "working": 0,
+        "failing": 2
+      },
+      {
+        "category": "analysis",
+        "total": 7,
+        "working": 0,
+        "failing": 7
+      },
+      {
+        "category": "system",
+        "total": 4,
+        "working": 0,
+        "failing": 4
+      },
+      {
+        "category": "conversation",
+        "total": 4,
+        "working": 0,
+        "failing": 4
+      }
+    ]
+  }
+}
