@@ -1777,8 +1777,25 @@ This tool is now working and ready for integration with VS Code Copilot Chat. Th
           github_copilot: ['copilot-chat']
         };
 
-        // Parse provider/model format for fallback validation
-        const [provider, modelName] = model.includes('/') ? model.split('/') : ['gemini', model];
+        // Parse provider/model format - determine correct provider based on model name
+        let provider: string;
+        let modelName: string;
+        
+        if (model.includes('/')) {
+          [provider, modelName] = model.split('/');
+        } else {
+          // Auto-detect provider based on model name
+          modelName = model;
+          if (['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'].includes(model)) {
+            provider = 'gemini';
+          } else if (['gpt-5', 'gpt-4-turbo', 'gpt-4o', 'gpt-4', 'gpt-3.5-turbo'].includes(model)) {
+            provider = 'openai';
+          } else if (['copilot-chat'].includes(model)) {
+            provider = 'github_copilot';
+          } else {
+            provider = 'gemini'; // Fallback to gemini for unknown models
+          }
+        }
         
         if (!apiManager && (!(provider in validModels) || !validModels[provider].includes(modelName))) {
           return {
