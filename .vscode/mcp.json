@@ -1,0 +1,34 @@
+{
+    "inputs": [
+        {
+            "type": "promptString",
+            "id": "geminiApiKey",
+            "description": "Enter your Gemini API Key (get one from https://aistudio.google.com/app/apikey)",
+            "password": true
+        },
+        {
+            "type": "promptString",
+            "id": "openaiApiKey",
+            "description": "Enter your OpenAI API Key for fallback (optional - get one from https://platform.openai.com/api-keys)",
+            "password": true
+        }
+    ],
+    "servers": {
+        "deep-code-reasoning": {
+            "command": "npx",
+            "args": [
+                "tsx",
+                "/home/lucas_galdino/repositories/mcp_servers/deep-code-reasoning-main/src/index.ts"
+            ],
+            "cwd": "/home/lucas_galdino/repositories/mcp_servers/deep-code-reasoning-main",
+            "env": {
+                "GEMINI_API_KEY": "${input:geminiApiKey}",
+                "OPENAI_API_KEY": "${input:openaiApiKey}",
+                "NODE_ENV": "development",
+                "GEMINI_MODEL": "gemini-2.5-flash",
+                "LOG_LEVEL": "debug",
+                "ENABLE_DEBUG_LOGGING": "true"
+            }
+        }
+    }
+}
